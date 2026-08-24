@@ -86,9 +86,16 @@ const canvas = document.getElementById('gameCanvas');
 const wrapper = document.getElementById('canvas-wrapper');
 const ctx = canvas.getContext('2d');
 
+let logicalWidth = 360;
+let logicalHeight = 500;
+
 function resizeCanvas() {
-    canvas.width = wrapper.clientWidth || 360;
-    canvas.height = wrapper.clientHeight || 500;
+    logicalWidth = wrapper.clientWidth || 360;
+    logicalHeight = wrapper.clientHeight || 500;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = logicalWidth * dpr;
+    canvas.height = logicalHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -208,8 +215,8 @@ function initPetals() {
     petals = [];
     for (let i = 0; i < 35; i++) {
         petals.push({
-            x: Math.random() * (canvas.width || 360),
-            y: Math.random() * (canvas.height || 500),
+            x: Math.random() * logicalWidth,
+            y: Math.random() * logicalHeight,
             size: Math.random() * 5 + 4,
             speedY: Math.random() * 1.5 + 0.8,
             speedX: Math.random() * 2 + 1.2,
@@ -296,7 +303,7 @@ function startGame(e) {
     nextLevelThreshold = 50;
     bgX = 0;
     
-    const groundY = canvas.height * 0.76;
+    const groundY = logicalHeight * 0.76;
     player.y = groundY - player.height;
     player.vy = 0;
     player.isGrounded = true;
@@ -319,8 +326,8 @@ function update() {
         p.x -= p.speedX + (gameState === 'PLAYING' ? gameSpeed * 0.25 : 0.5); 
         p.y += p.speedY;
         p.angle += p.spin;
-        if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width + 50; }
-        if (p.x < -20) { p.x = canvas.width + 20; p.y = Math.random() * canvas.height; }
+        if (p.y > logicalHeight) { p.y = -10; p.x = Math.random() * logicalWidth + 50; }
+        if (p.x < -20) { p.x = logicalWidth + 20; p.y = Math.random() * logicalHeight; }
     });
 
     if (gameState !== 'PLAYING') return;
@@ -346,7 +353,7 @@ function update() {
         document.getElementById('high-score-disp').innerText = `${highScore}m`;
     }
 
-    const groundY = canvas.height * 0.76;
+    const groundY = logicalHeight * 0.76;
     const floorY = groundY - player.height;
 
     player.vy += player.gravity;
@@ -371,7 +378,7 @@ function update() {
     if (spawnTimer >= nextSpawnDelay) {
         const emoji = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
         obstacles.push({
-            x: canvas.width,
+            x: logicalWidth,
             y: groundY - 45,
             width: 45,
             height: 45,
@@ -415,14 +422,14 @@ function draw() {
         ctx.translate((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
     const currentBg = (gameState === 'START') ? topBgImg : gameBgImg;
 
     if (currentBg.complete && currentBg.naturalWidth > 0) {
         if (gameState === 'PLAYING') {
             const bgAspect = currentBg.naturalWidth / currentBg.naturalHeight;
-            const bgWidth = canvas.height * bgAspect;
+            const bgWidth = logicalHeight * bgAspect;
             
             const scrollPos = -bgX;
             const firstTileIndex = Math.floor(scrollPos / bgWidth);
@@ -431,14 +438,14 @@ function draw() {
             let drawX = startX;
             let tileIndex = firstTileIndex;
 
-            while (drawX < canvas.width) {
+            while (drawX < logicalWidth) {
                 ctx.save();
                 if (Math.abs(tileIndex) % 2 === 1) {
                     ctx.translate(drawX + bgWidth, 0);
                     ctx.scale(-1, 1);
-                    ctx.drawImage(currentBg, 0, 0, bgWidth + 1, canvas.height);
+                    ctx.drawImage(currentBg, 0, 0, bgWidth + 1, logicalHeight);
                 } else {
-                    ctx.drawImage(currentBg, drawX, 0, bgWidth + 1, canvas.height);
+                    ctx.drawImage(currentBg, drawX, 0, bgWidth + 1, logicalHeight);
                 }
                 ctx.restore();
                 
@@ -446,11 +453,11 @@ function draw() {
                 tileIndex++;
             }
         } else {
-            ctx.drawImage(currentBg, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(currentBg, 0, 0, logicalWidth, logicalHeight);
         }
     } else {
-        ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, canvas.height * 0.76, canvas.width, canvas.height * 0.24);
+        ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+        ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, logicalHeight * 0.76, logicalWidth, logicalHeight * 0.24);
     }
 
     dustParticles.forEach(p => {
@@ -460,7 +467,7 @@ function draw() {
         ctx.fill();
     });
 
-    // 障害物を白い背景なし、透過なしでくっきり描画
+    // 障害物を完全不透明・背景なしでくっきり描画（ピクセル単位でスナップ）
     ctx.save();
     ctx.globalAlpha = 1.0;
     ctx.textBaseline = 'middle';
@@ -468,12 +475,11 @@ function draw() {
     ctx.font = '36px sans-serif';
     
     obstacles.forEach(obs => {
-        let cx = Math.floor(obs.x + obs.width / 2);
-        let cy = Math.floor(obs.y + obs.height / 2);
+        let cx = Math.round(obs.x + obs.width / 2);
+        let cy = Math.round(obs.y + obs.height / 2);
         
-        // 絵文字が背景に埋もれないよう、濃い影をつけてくっきり表示
         ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 4;
         ctx.shadowOffsetX = 1;
         ctx.shadowOffsetY = 1;
         
@@ -526,6 +532,4 @@ function loop() {
 
 loop();
 </script>
-</body>
-</html>
 
