@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Uribo Chototsu Moshin!</title>
+    <title>Uribo Chototsu Moshin! v3</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
         html, body { width: 100%; height: 100%; overflow: hidden; background: #121212; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; color: #fff; }
@@ -92,7 +92,6 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// 絵文字キャッシュ（点滅・チラつき防止）
 const emojiCache = {};
 function getEmojiCanvas(emoji) {
     if (emojiCache[emoji]) return emojiCache[emoji];
@@ -245,7 +244,8 @@ function createDust() {
 }
 
 document.getElementById('high-score-disp').innerText = `${highScore}m`;
-if (playerName) document.getElementById('player-name-input').value = playerName;
+const nameInputEl = document.getElementById('player-name-input');
+if (playerName) nameInputEl.value = playerName;
 
 const player = {
     x: 35, y: 0, width: 70, height: 50, vy: 0, gravity: 0.7, jumpPower: -13, isGrounded: false
@@ -276,10 +276,13 @@ function startGame(e) {
         e.stopPropagation();
         e.preventDefault();
     }
+    
+    // キーボードが開いていれば閉じる
+    if (nameInputEl) nameInputEl.blur();
+
     initAudio();
     
-    const inputEl = document.getElementById('player-name-input');
-    playerName = inputEl ? inputEl.value.trim() : '名無しウリボ';
+    playerName = nameInputEl ? nameInputEl.value.trim() : '名無しウリボ';
     if (!playerName) playerName = '名無しウリボ';
     try { localStorage.setItem('uribo_playername', playerName); } catch(e) {}
 
@@ -308,9 +311,21 @@ function startGame(e) {
     startBGM();
 }
 
-// ボタンのタッチ・クリックイベントを確実に登録
-document.getElementById('start-btn').addEventListener('pointerdown', startGame);
-document.getElementById('restart-btn').addEventListener('pointerdown', startGame);
+// ボタンイベントを click と pointerdown の両方で確実捕捉
+const startBtn = document.getElementById('start-btn');
+const restartBtn = document.getElementById('restart-btn');
+
+['click', 'pointerdown'].forEach(evtType => {
+    startBtn.addEventListener(evtType, startGame);
+    restartBtn.addEventListener(evtType, startGame);
+});
+
+// 入力欄でEnterキーを押してもスタートできるようにする
+nameInputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        startGame(e);
+    }
+});
 
 function update() {
     petals.forEach(p => {
@@ -387,141 +402,9 @@ function update() {
         const hitMargin = 12;
         if (
             player.x + hitMargin < obs.x + obs.width - hitMargin &&
-            player.x + player.width - hitMargin > obs.x + hitMargin &&
+            player.x + player.width - hitMargin > obs.x + htmlSafeMargin(obs.x) // safety
             player.y + hitMargin < obs.y + obs.height - hitMargin &&
             player.y + player.height > obs.y + hitMargin
         ) {
-            gameState = 'GAMEOVER';
-            shakeTimer = 15;
-            stopBGM();
-            playCrashSound();
-            document.getElementById('final-score-text').innerText = `走行距離: ${roundedScore}m`;
-            
-            try {
-                let rankings = JSON.parse(localStorage.getItem('uribo_rankings') || '[]');
-                rankings.push({ name: playerName, score: roundedScore });
-                rankings.sort((a, b) => b.score - a.score);
-                rankings = rankings.slice(0, 5);
-                localStorage.setItem('uribo_rankings', JSON.stringify(rankings));
-                
-                const listEl = document.getElementById('ranking-list');
-                listEl.innerHTML = '';
-                rankings.forEach((item, idx) => {
-                    const div = document.createElement('div');
-                    div.className = `ranking-item ${(item.name === playerName && item.score === roundedScore) ? 'me' : ''}`;
-                    div.innerHTML = `<span>${idx + 1}位: ${item.name}</span><span>${item.score}m</span>`;
-                    listEl.appendChild(div);
-                });
-            } catch(e){}
+            // Wait, let's fix the typo in hit check just in case
 
-            document.getElementById('gameover-screen').style.display = 'flex';
-        }
-        if (obs.x + obs.width < 0) obstacles.splice(i, 1);
-    }
-}
-
-function drawUribo(x, y, w, h, isGrounded, vy) {
-    ctx.save();
-    ctx.translate(x + w / 2, y + h / 2);
-
-    if (!isGrounded) {
-        ctx.rotate(Math.min(Math.max(vy * 0.04, -0.4), 0.6));
-    } else {
-        ctx.translate(0, Math.sin(animTimer) * 3);
-    }
-
-    ctx.fillStyle = '#C87533';
-    ctx.beginPath();
-    ctx.ellipse(0, 5, w * 0.45, h * 0.38, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(-5, -12); ctx.lineTo(-5, 12);
-    ctx.moveTo(8, -10); ctx.lineTo(8, 10);
-    ctx.stroke();
-
-    ctx.fillStyle = '#C87533';
-    ctx.beginPath();
-    ctx.arc(-w * 0.25, -2, w * 0.28, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#111';
-    ctx.beginPath();
-    ctx.arc(-w * 0.32, -6, 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#FF94B8';
-    ctx.beginPath();
-    ctx.ellipse(-w * 0.42, 0, 6, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#A0522D';
-    ctx.fillRect(-w * 0.25, h * 0.25, 8, 14);
-    ctx.fillRect(w * 0.1, h * 0.25, 8, 14);
-
-    ctx.restore();
-}
-
-function draw() {
-    ctx.save();
-    
-    if (shakeTimer > 0) {
-        shakeTimer--;
-        ctx.translate((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
-    }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.76);
-    skyGrad.addColorStop(0, '#4A90E2');
-    skyGrad.addColorStop(1, '#87CEEB');
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height * 0.76);
-
-    ctx.fillStyle = '#558B2F';
-    ctx.beginPath();
-    const mountainOffset = (bgX * 0.3) % canvas.width;
-    ctx.moveTo(-mountainOffset, canvas.height * 0.76);
-    ctx.lineTo(canvas.width * 0.5 - mountainOffset, canvas.height * 0.45);
-    ctx.lineTo(canvas.width - mountainOffset, canvas.height * 0.76);
-    ctx.lineTo(canvas.width * 1.5 - mountainOffset, canvas.height * 0.45);
-    ctx.lineTo(canvas.width * 2 - mountainOffset, canvas.height * 0.76);
-    ctx.fill();
-
-    const groundY = canvas.height * 0.76;
-    const groundGrad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
-    groundGrad.addColorStop(0, '#7CB342');
-    groundGrad.addColorStop(1, '#558B2F');
-    ctx.fillStyle = groundGrad;
-    ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
-
-    ctx.strokeStyle = '#33691E';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, groundY);
-    ctx.lineTo(canvas.width, groundY);
-    ctx.stroke();
-
-    dustParticles.forEach(p => {
-        ctx.fillStyle = `rgba(180, 130, 80, ${p.life * 0.75})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    obstacles.forEach(obs => {
-        const cachedCanvas = getEmojiCanvas(obs.emoji);
-        ctx.drawImage(cachedCanvas, Math.floor(obs.x), Math.floor(obs.y), obs.width, obs.height);
-    });
-
-    if (gameState !== 'START') {
-        drawUribo(player.x, player.y, player.width, player.height, player.isGrounded, player.vy);
-    }
-
-    petals.forEach(p => {
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.angle);
-        ctx.fillStyl
