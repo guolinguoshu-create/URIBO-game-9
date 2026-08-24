@@ -27,7 +27,6 @@
 
         .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; color: white; text-align: center; padding: 16px; z-index: 20; }
         
-        /* トップ画面の配置（ほんのもう少し下） */
         #start-screen { background: rgba(0,0,0,0.2); justify-content: flex-start; padding-top: 66%; }
         
         input[type="text"] { width: 80%; max-width: 230px; padding: 10px 14px; font-size: 16px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 14px; outline: none; user-select: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
@@ -35,7 +34,6 @@
         button.action-btn { padding: 14px 28px; font-size: 18px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px #BF360C; width: 75%; max-width: 200px; z-index: 25; outline: none; }
         button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px #BF360C; }
 
-        /* 結果画面の配置（もう少し上） */
         #gameover-screen { background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; padding-bottom: 32%; }
         
         #gameover-screen h1 { font-size: 26px; margin-bottom: 6px; color: #FF5252; text-shadow: 2px 2px 4px #000; }
@@ -74,7 +72,7 @@
             <p id="final-score-text">走行距離: 0m</p>
             
             <div class="ranking-box">
-                <div class="ranking-title">🏆 全国ランキング (TOP 5)</div>
+                <div class="ranking-title">🏆 ハイスコアランキング (TOP 5)</div>
                 <div id="ranking-list"></div>
             </div>
 
@@ -104,7 +102,6 @@ let isMuted = false;
 let bgmTimer = null;
 let bgmStep = 0;
 
-// 疾走感のある明るいアップテンポメロディー定義
 const melody = [
     523.25, 659.25, 783.99, 1046.50, 783.99, 659.25, 880.00, 1046.50,
     698.46, 880.00, 1046.50, 1318.51, 1046.50, 880.00, 783.99, 659.25
@@ -135,7 +132,6 @@ function startBGM() {
         try {
             const now = audioCtx.currentTime;
             
-            // 主旋律（リード）
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'square';
@@ -145,7 +141,6 @@ function startBGM() {
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(now); osc.stop(now + 0.11);
 
-            // ベースライン
             const bassOsc = audioCtx.createOscillator();
             const bassGain = audioCtx.createGain();
             bassOsc.type = 'sawtooth';
@@ -263,6 +258,25 @@ wrapper.addEventListener('pointerdown', (e) => {
     }
 });
 
+function updateRankings(name, currentScore) {
+    try {
+        let rankings = JSON.parse(localStorage.getItem('uribo_rankings') || '[]');
+        rankings.push({ name: name, score: currentScore });
+        rankings.sort((a, b) => b.score - a.score);
+        rankings = rankings.slice(0, 5);
+        localStorage.setItem('uribo_rankings', JSON.stringify(rankings));
+        
+        const listEl = document.getElementById('ranking-list');
+        listEl.innerHTML = '';
+        rankings.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = `ranking-item ${(item.name === name && item.score === currentScore) ? 'me' : ''}`;
+            div.innerHTML = `<span>${idx + 1}位: ${item.name}</span><span>${item.score}m</span>`;
+            listEl.appendChild(div);
+        });
+    } catch(e){}
+}
+
 function startGame(e) {
     if (e) {
         e.stopPropagation();
@@ -373,7 +387,6 @@ function update() {
         obs.x -= gameSpeed;
 
         const hitMargin = 12;
-        // 衝突判定の修正（確実に当たるように復旧）
         if (
             player.x + hitMargin < obs.x + obs.width - hitMargin &&
             player.x + player.width - hitMargin > obs.x + hitMargin &&
@@ -386,22 +399,7 @@ function update() {
             playCrashSound();
             document.getElementById('final-score-text').innerText = `走行距離: ${roundedScore}m`;
             
-            try {
-                let rankings = JSON.parse(localStorage.getItem('uribo_rankings') || '[]');
-                rankings.push({ name: playerName, score: roundedScore });
-                rankings.sort((a, b) => b.score - a.score);
-                rankings = rankings.slice(0, 5);
-                localStorage.setItem('uribo_rankings', JSON.stringify(rankings));
-                
-                const listEl = document.getElementById('ranking-list');
-                listEl.innerHTML = '';
-                rankings.forEach((item, idx) => {
-                    const div = document.createElement('div');
-                    div.className = `ranking-item ${(item.name === playerName && item.score === roundedScore) ? 'me' : ''}`;
-                    div.innerHTML = `<span>${idx + 1}位: ${item.name}</span><span>${item.score}m</span>`;
-                    listEl.appendChild(div);
-                });
-            } catch(e){}
+            updateRankings(playerName, roundedScore);
 
             document.getElementById('gameover-screen').style.display = 'flex';
         }
@@ -455,7 +453,6 @@ function draw() {
         ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, canvas.height * 0.76, canvas.width, canvas.height * 0.24);
     }
 
-    // 白煙エフェクト
     dustParticles.forEach(p => {
         ctx.fillStyle = `rgba(255, 255, 255, ${p.life * 0.75})`;
         ctx.beginPath();
@@ -463,16 +460,26 @@ function draw() {
         ctx.fill();
     });
 
-    // 障害物の描画（不透明度1.0で確実にくっきり描画）
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
     ctx.font = '36px sans-serif';
     ctx.globalAlpha = 1.0;
     obstacles.forEach(obs => {
-        ctx.fillText(obs.emoji, Math.floor(obs.x + obs.width / 2), Math.floor(obs.y + obs.height / 2));
+        let cx = Math.floor(obs.x + obs.width / 2);
+        let cy = Math.floor(obs.y + obs.height / 2);
+        
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        
+        ctx.fillText(obs.emoji, cx, cy);
+        
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
     });
 
-    // プレイヤー描画
     if (gameState !== 'START') {
         ctx.save();
         ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
@@ -492,7 +499,6 @@ function draw() {
         ctx.restore();
     }
 
-    // 桜吹雪描画
     petals.forEach(p => {
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -517,3 +523,4 @@ loop();
 </script>
 </body>
 </html>
+
