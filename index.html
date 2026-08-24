@@ -27,21 +27,21 @@
 
         .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; color: white; text-align: center; padding: 16px; z-index: 20; }
         
-        /* スタート画面の配置をやや上気味に調整 */
-        #start-screen { background: rgba(0,0,0,0.2); justify-content: flex-start; padding-top: 48%; }
+        /* スタート画面：タイトルとイラストの隙間にぴったり収める位置調整 */
+        #start-screen { background: rgba(0,0,0,0.15); justify-content: center; padding-top: 110px; }
         
-        input[type="text"] { width: 80%; max-width: 230px; padding: 10px 14px; font-size: 16px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 14px; outline: none; user-select: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        input[type="text"] { width: 80%; max-width: 230px; padding: 10px 14px; font-size: 16px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 12px; outline: none; user-select: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         
         button.action-btn { padding: 14px 28px; font-size: 18px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px #BF360C; width: 75%; max-width: 200px; z-index: 25; outline: none; }
         button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px #BF360C; }
 
-        /* 結果画面を画面中央に綺麗にレイアウト */
-        #gameover-screen { background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; }
-        #gameover-screen h1 { font-size: 26px; margin-bottom: 6px; color: #FF5252; text-shadow: 2px 2px 4px #000; }
-        #final-score-text { font-size: 20px; color: #00E676; margin-bottom: 14px; font-weight: bold; }
-        .ranking-box { width: 92%; max-width: 320px; background: rgba(0,0,0,0.75); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 12px; padding: 12px; margin-bottom: 16px; font-size: 14px; text-align: left; }
-        .ranking-title { font-weight: bold; color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 6px; margin-bottom: 8px; text-align: center; }
-        .ranking-item { display: flex; justify-content: space-between; padding: 4px 6px; }
+        /* 結果画面：画面上下左右のピタッと真ん中に配置 */
+        #gameover-screen { background: rgba(0,0,0,0.82); display: none; justify-content: center; align-items: center; padding-top: 0; }
+        #gameover-screen h1 { font-size: 26px; margin-bottom: 4px; color: #FF5252; text-shadow: 2px 2px 4px #000; }
+        #final-score-text { font-size: 20px; color: #00E676; margin-bottom: 12px; font-weight: bold; }
+        .ranking-box { width: 90%; max-width: 320px; background: rgba(0,0,0,0.75); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 12px; padding: 10px 12px; margin-bottom: 16px; font-size: 14px; text-align: left; }
+        .ranking-title { font-weight: bold; color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 4px; margin-bottom: 6px; text-align: center; }
+        .ranking-item { display: flex; justify-content: space-between; padding: 3px 6px; }
         .ranking-item.me { background: rgba(255, 215, 0, 0.3); border-radius: 4px; font-weight: bold; color: #FFD700; }
     </style>
 </head>
@@ -98,12 +98,27 @@ const uriboImg = new Image(); uriboImg.src = 'uribo.png';
 const topBgImg = new Image(); topBgImg.src = 'top.png'; 
 const gameBgImg = new Image(); gameBgImg.src = 'bg.png'; 
 
+// 障害物絵文字の点滅（チラつき）を完全防止するオフスクリーンキャッシュ
+const emojiCache = {};
+function getEmojiCanvas(emoji) {
+    if (emojiCache[emoji]) return emojiCache[emoji];
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = 60;
+    offCanvas.height = 60;
+    const offCtx = offCanvas.getContext('2d');
+    offCtx.font = '42px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    offCtx.textAlign = 'center';
+    offCtx.textBaseline = 'middle';
+    offCtx.fillText(emoji, 30, 30);
+    emojiCache[emoji] = offCanvas;
+    return offCanvas;
+}
+
 let audioCtx = null;
 let isMuted = false;
 let bgmTimer = null;
 let bgmStep = 0;
 
-// 疾走感のある明るいアップテンポメロディー定義
 const melody = [
     523.25, 659.25, 783.99, 1046.50, 783.99, 659.25, 880.00, 1046.50,
     698.46, 880.00, 1046.50, 1318.51, 1046.50, 880.00, 783.99, 659.25
@@ -134,7 +149,6 @@ function startBGM() {
         try {
             const now = audioCtx.currentTime;
             
-            // 主旋律（リード）
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'square';
@@ -144,7 +158,6 @@ function startBGM() {
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(now); osc.stop(now + 0.11);
 
-            // ベースライン
             const bassOsc = audioCtx.createOscillator();
             const bassGain = audioCtx.createGain();
             bassOsc.type = 'sawtooth';
@@ -156,7 +169,7 @@ function startBGM() {
 
             bgmStep++;
         } catch(e){}
-    }, 130); // 疾走感のあるテンポ（130ms間隔）
+    }, 130);
 }
 
 function stopBGM() {
@@ -461,12 +474,10 @@ function draw() {
         ctx.fill();
     });
 
-    // 障害物描画（点滅・チラつき防止のため座標を整数化＆設定を初期化）
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.font = '36px sans-serif';
+    // 障害物描画（オフスクリーン画像による完全点滅防止描画）
     obstacles.forEach(obs => {
-        ctx.fillText(obs.emoji, Math.floor(obs.x + obs.width / 2), Math.floor(obs.y + obs.height / 2));
+        const cachedCanvas = getEmojiCanvas(obs.emoji);
+        ctx.drawImage(cachedCanvas, Math.floor(obs.x), Math.floor(obs.y), obs.width, obs.height);
     });
 
     // プレイヤー描画
@@ -503,15 +514,4 @@ function draw() {
 
     ctx.restore();
 }
-
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-loop();
-</script>
-</body>
-</html>
 
