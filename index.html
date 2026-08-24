@@ -6,40 +6,40 @@
     <title>Uribo Chototsu Moshin! v3</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: #121212; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; color: #fff; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #121212; font-family: sans-serif; color: #fff; }
         
         #outer-container { width: 100vw; height: 100vh; max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; background: #1e1e24; position: relative; }
         
-        #game-header { width: 100%; height: 36px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; color: #FFD700; flex-shrink: 0; background: rgba(0,0,0,0.3); z-index: 30; }
-        #game-header span { font-weight: bold; font-size: 13px; text-shadow: 1px 1px 2px #000; }
-        #sound-toggle { font-size: 12px; background: #333; border: 1px solid #555; color: white; padding: 2px 8px; border-radius: 15px; cursor: pointer; }
+        #game-header { width: 100%; height: 40px; display: flex; justify-content: space-between; align-items: center; padding: 0 12px; color: #FFD700; flex-shrink: 0; background: rgba(0,0,0,0.4); z-index: 30; }
+        #game-header span { font-weight: bold; font-size: 14px; }
+        #sound-toggle { font-size: 14px; background: #333; border: 1px solid #555; color: white; padding: 4px 10px; border-radius: 15px; cursor: pointer; }
 
-        #canvas-wrapper { width: 100%; flex: 1; position: relative; overflow: hidden; background: #87CEEB; }
-        canvas { width: 100%; height: 100%; display: block; }
+        #canvas-wrapper { width: 100%; flex: 1; position: relative; overflow: hidden; background: #87CEEB; display: flex; flex-direction: column; }
+        canvas { width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; }
 
-        #sky-score-board { position: absolute; top: 12px; right: 12px; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); border: 2px solid rgba(255, 255, 255, 0.3); padding: 8px 14px; border-radius: 14px; text-align: right; pointer-events: none; z-index: 10; display: none; }
-        .score-line { font-size: 13px; color: #EEE; font-weight: bold; }
-        .score-val { font-size: 22px; color: #00E676; font-weight: 900; }
+        #sky-score-board { position: absolute; top: 12px; right: 12px; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); border: 2px solid rgba(255, 255, 255, 0.3); padding: 8px 14px; border-radius: 14px; text-align: right; pointer-events: none; z-index: 10; display: none; }
+        .score-line { font-size: 12px; color: #EEE; font-weight: bold; }
+        .score-val { font-size: 20px; color: #00E676; font-weight: 900; }
         .score-val.high { color: #FFD700; }
 
-        #level-up-text { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-size: 36px; font-weight: 900; color: #FF5722; text-shadow: 2px 2px 0 #FFF, -2px -2px 0 #FFF, 2px -2px 0 #FFF, -2px 2px 0 #FFF; opacity: 0; pointer-events: none; z-index: 15; transition: all 0.3s ease; }
+        #level-up-text { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-size: 34px; font-weight: 900; color: #FF5722; text-shadow: 2px 2px 0 #FFF, -2px -2px 0 #FFF, 2px -2px 0 #FFF, -2px 2px 0 #FFF; opacity: 0; pointer-events: none; z-index: 15; transition: all 0.3s ease; }
         #level-up-text.active { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 
-        .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; color: white; text-align: center; padding: 16px; z-index: 20; }
+        .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 20px; z-index: 20; }
         
-        #start-screen { background: rgba(0,0,0,0.15); justify-content: center; padding-top: 110px; }
+        #start-screen { background: rgba(0,0,0,0.3); }
         
-        input[type="text"] { width: 80%; max-width: 230px; padding: 10px 14px; font-size: 16px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 12px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        input[type="text"] { width: 85%; max-width: 260px; padding: 12px 16px; font-size: 18px; border-radius: 25px; border: 3px solid #FF5722; background: rgba(0,0,0,0.9); color: #fff; text-align: center; margin-bottom: 16px; outline: none; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
         
-        button.action-btn { padding: 14px 28px; font-size: 18px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px #BF360C; width: 75%; max-width: 200px; z-index: 25; outline: none; }
-        button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px #BF360C; }
+        button.action-btn { padding: 16px 32px; font-size: 20px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 35px; cursor: pointer; box-shadow: 0 5px #BF360C; width: 80%; max-width: 240px; z-index: 25; outline: none; }
+        button.action-btn:active { transform: translateY(3px); box-shadow: 0 2px #BF360C; }
 
-        #gameover-screen { background: rgba(0,0,0,0.82); display: none; justify-content: center; align-items: center; padding-top: 0; }
-        #gameover-screen h1 { font-size: 26px; margin-bottom: 4px; color: #FF5252; text-shadow: 2px 2px 4px #000; }
-        #final-score-text { font-size: 20px; color: #00E676; margin-bottom: 12px; font-weight: bold; }
-        .ranking-box { width: 90%; max-width: 320px; background: rgba(0,0,0,0.75); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 12px; padding: 10px 12px; margin-bottom: 16px; font-size: 14px; text-align: left; }
-        .ranking-title { font-weight: bold; color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 4px; margin-bottom: 6px; text-align: center; }
-        .ranking-item { display: flex; justify-content: space-between; padding: 3px 6px; }
+        #gameover-screen { background: rgba(0,0,0,0.85); display: none; }
+        #gameover-screen h1 { font-size: 28px; margin-bottom: 8px; color: #FF5252; text-shadow: 2px 2px 4px #000; }
+        #final-score-text { font-size: 22px; color: #00E676; margin-bottom: 16px; font-weight: bold; }
+        .ranking-box { width: 90%; max-width: 320px; background: rgba(0,0,0,0.8); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 12px; padding: 12px; margin-bottom: 20px; font-size: 14px; text-align: left; }
+        .ranking-title { font-weight: bold; color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 4px; margin-bottom: 8px; text-align: center; }
+        .ranking-item { display: flex; justify-content: space-between; padding: 4px 8px; }
         .ranking-item.me { background: rgba(255, 215, 0, 0.3); border-radius: 4px; font-weight: bold; color: #FFD700; }
     </style>
 </head>
@@ -47,7 +47,7 @@
 
 <div id="outer-container">
     <div id="game-header">
-        <span>🌸 Uribo Chototsu Moshin! v3</span>
+        <span>🌸 Uribo Chototsu Moshin!</span>
         <button id="sound-toggle">🔊</button>
     </div>
 
@@ -62,7 +62,7 @@
         <div id="level-up-text">SPEED UP!! 💨</div>
 
         <div id="start-screen" class="ui-screen">
-            <input type="text" id="player-name-input" placeholder="名前を入力" maxlength="10">
+            <input type="text" id="player-name-input" placeholder="Name (お名前)" maxlength="10">
             <button class="action-btn" id="start-btn">ゲームスタート！</button>
         </div>
 
@@ -99,7 +99,7 @@ function getEmojiCanvas(emoji) {
     offCanvas.width = 60;
     offCanvas.height = 60;
     const offCtx = offCanvas.getContext('2d');
-    offCtx.font = '42px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    offCtx.font = '42px sans-serif';
     offCtx.textAlign = 'center';
     offCtx.textBaseline = 'middle';
     offCtx.fillText(emoji, 30, 30);
@@ -112,20 +112,13 @@ let isMuted = false;
 let bgmTimer = null;
 let bgmStep = 0;
 
-const melody = [
-    523.25, 659.25, 783.99, 1046.50, 783.99, 659.25, 880.00, 1046.50,
-    698.46, 880.00, 1046.50, 1318.51, 1046.50, 880.00, 783.99, 659.25
-];
-const bassNotes = [130.81, 130.81, 174.61, 174.61, 196.00, 196.00, 130.81, 196.00];
+const melody = [523.25, 659.25, 783.99, 1046.50, 783.99, 659.25, 880.00, 1046.50];
+const bassNotes = [130.81, 174.61, 196.00, 130.81];
 
 function initAudio() {
     try {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     } catch(e) {}
 }
 
@@ -143,28 +136,17 @@ function startBGM() {
         if (isMuted || !audioCtx || gameState !== 'PLAYING') return;
         try {
             const now = audioCtx.currentTime;
-            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'square';
             osc.frequency.setValueAtTime(melody[bgmStep % melody.length], now);
-            gain.gain.setValueAtTime(0.025, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+            gain.gain.setValueAtTime(0.02, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(now); osc.stop(now + 0.11);
-
-            const bassOsc = audioCtx.createOscillator();
-            const bassGain = audioCtx.createGain();
-            bassOsc.type = 'sawtooth';
-            bassOsc.frequency.setValueAtTime(bassNotes[Math.floor(bgmStep / 2) % bassNotes.length], now);
-            bassGain.gain.setValueAtTime(0.035, now);
-            bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-            bassOsc.connect(bassGain); bassGain.connect(audioCtx.destination);
-            bassOsc.start(now); bassOsc.stop(now + 0.12);
-
+            osc.start(now); osc.stop(now + 0.1);
             bgmStep++;
         } catch(e){}
-    }, 130);
+    }, 140);
 }
 
 function stopBGM() {
@@ -178,12 +160,12 @@ function playJumpSound() {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(280, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.12);
+        osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
         gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
     } catch(e){}
 }
 
@@ -193,12 +175,12 @@ function playCrashSound() {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.25);
         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.25);
     } catch(e){}
 }
 
@@ -218,15 +200,15 @@ let petals = [];
 
 function initPetals() {
     petals = [];
-    for (let i = 0; i < 35; i++) {
+    for (let i = 0; i < 25; i++) {
         petals.push({
-            x: Math.random() * (canvas.width || 360),
-            y: Math.random() * (canvas.height || 500),
-            size: Math.random() * 5 + 4,
-            speedY: Math.random() * 1.5 + 0.8,
-            speedX: Math.random() * 2 + 1.2,
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 4 + 3,
+            speedY: Math.random() * 1.2 + 0.6,
+            speedX: Math.random() * 1.5 + 1.0,
             angle: Math.random() * Math.PI * 2,
-            spin: (Math.random() - 0.5) * 0.08
+            spin: (Math.random() - 0.5) * 0.05
         });
     }
 }
@@ -235,11 +217,11 @@ initPetals();
 function createDust() {
     dustParticles.push({
         x: player.x + 10,
-        y: player.y + player.height - 8,
-        vx: (Math.random() - 0.5) * 3 - gameSpeed * 0.6,
-        vy: (Math.random() - 1) * 2.5,
+        y: player.y + player.height - 5,
+        vx: (Math.random() - 0.5) * 2 - gameSpeed * 0.5,
+        vy: (Math.random() - 1) * 2,
         life: 1.0,
-        size: Math.random() * 7 + 4
+        size: Math.random() * 6 + 3
     });
 }
 
@@ -247,23 +229,22 @@ document.getElementById('high-score-disp').innerText = `${highScore}m`;
 const nameInputEl = document.getElementById('player-name-input');
 if (playerName) nameInputEl.value = playerName;
 
-const player = {
-    x: 35, y: 0, width: 70, height: 50, vy: 0, gravity: 0.7, jumpPower: -13, isGrounded: false
-};
+const player = { x: 35, y: 0, width: 65, height: 45, vy: 0, gravity: 0.65, jumpPower: -12, isGrounded: false };
 
 let spawnTimer = 0;
-let nextSpawnDelay = 50;
-const obstacleTypes = ['🍄', '🪨', '🪵', '🐍', '🐸'];
+let nextSpawnDelay = 55;
+const obstacleTypes = ['🍄', '🪨', '🪵', '🐍'];
 
 function doJump() {
     if (gameState === 'PLAYING' && player.isGrounded) {
         player.vy = player.jumpPower;
         player.isGrounded = false;
         playJumpSound();
-        for (let i = 0; i < 6; i++) createDust();
+        for (let i = 0; i < 5; i++) createDust();
     }
 }
 
+// 画面どこをタップしてもジャンプできるようにする
 wrapper.addEventListener('pointerdown', (e) => {
     if (gameState === 'PLAYING') {
         e.preventDefault();
@@ -273,11 +254,10 @@ wrapper.addEventListener('pointerdown', (e) => {
 
 function startGame() {
     if (nameInputEl) nameInputEl.blur();
-
     initAudio();
     
-    playerName = nameInputEl ? nameInputEl.value.trim() : '名無しウリボ';
-    if (!playerName) playerName = '名無しウリボ';
+    playerName = nameInputEl ? nameInputEl.value.trim() : '';
+    if (!playerName) playerName = 'ウリボ';
     try { localStorage.setItem('uribo_playername', playerName); } catch(e) {}
 
     resizeCanvas();
@@ -305,16 +285,13 @@ function startGame() {
     startBGM();
 }
 
-// スマホで確実に対応するため touchend と click を登録
+// スタートボタン・リスタートボタンの確実なバインド
 const startBtn = document.getElementById('start-btn');
 const restartBtn = document.getElementById('restart-btn');
 
 [startBtn, restartBtn].forEach(btn => {
-    btn.addEventListener('touchend', (e) => {
+    btn.addEventListener('pointerup', (e) => {
         e.preventDefault();
-        startGame();
-    });
-    btn.addEventListener('click', () => {
         startGame();
     });
 });
@@ -328,18 +305,18 @@ nameInputEl.addEventListener('keydown', (e) => {
 
 function update() {
     petals.forEach(p => {
-        p.x -= p.speedX + (gameState === 'PLAYING' ? gameSpeed * 0.25 : 0.5); 
+        p.x -= p.speedX + (gameState === 'PLAYING' ? gameSpeed * 0.2 : 0.4); 
         p.y += p.speedY;
         p.angle += p.spin;
-        if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width + 50; }
+        if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width; }
         if (p.x < -20) { p.x = canvas.width + 20; p.y = Math.random() * canvas.height; }
     });
 
     if (gameState !== 'PLAYING') return;
 
     score += 0.15;
-    gameSpeed = 5 + (score / 45);
-    animTimer += 0.25;
+    gameSpeed = 5 + (score / 40);
+    animTimer += 0.2;
     bgX -= gameSpeed;
     
     const roundedScore = Math.floor(score);
@@ -349,7 +326,7 @@ function update() {
         nextLevelThreshold += 50;
         const levelText = document.getElementById('level-up-text');
         levelText.classList.add('active');
-        setTimeout(() => { levelText.classList.remove('active'); }, 1200);
+        setTimeout(() => { levelText.classList.remove('active'); }, 1000);
     }
 
     if (roundedScore > highScore) {
@@ -368,14 +345,14 @@ function update() {
         player.y = floorY;
         player.vy = 0;
         player.isGrounded = true;
-        if (Math.random() > 0.3) createDust();
+        if (Math.random() > 0.4) createDust();
     }
 
     for (let i = dustParticles.length - 1; i >= 0; i--) {
         let p = dustParticles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 0.04;
+        p.life -= 0.05;
         if (p.life <= 0) dustParticles.splice(i, 1);
     }
 
@@ -384,21 +361,21 @@ function update() {
         const emoji = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
         obstacles.push({
             x: canvas.width,
-            y: groundY - 45,
-            width: 45,
-            height: 45,
+            y: groundY - 42,
+            width: 42,
+            height: 42,
             emoji: emoji
         });
         spawnTimer = 0;
-        const minDelay = Math.max(25, 55 - Math.floor(gameSpeed * 2));
-        nextSpawnDelay = Math.floor(Math.random() * 30) + minDelay;
+        const minDelay = Math.max(25, 55 - Math.floor(gameSpeed * 1.5));
+        nextSpawnDelay = Math.floor(Math.random() * 25) + minDelay;
     }
 
     for (let i = obstacles.length - 1; i >= 0; i--) {
         let obs = obstacles[i];
         obs.x -= gameSpeed;
 
-        const hitMargin = 12;
+        const hitMargin = 10;
         if (
             player.x + hitMargin < obs.x + obs.width - hitMargin &&
             player.x + player.width - hitMargin > obs.x + hitMargin &&
@@ -406,7 +383,7 @@ function update() {
             player.y + player.height > obs.y + hitMargin
         ) {
             gameState = 'GAMEOVER';
-            shakeTimer = 15;
+            shakeTimer = 12;
             stopBGM();
             playCrashSound();
             document.getElementById('final-score-text').innerText = `走行距離: ${roundedScore}m`;
@@ -423,7 +400,7 @@ function update() {
                 rankings.forEach((item, idx) => {
                     const div = document.createElement('div');
                     div.className = `ranking-item ${(item.name === playerName && item.score === roundedScore) ? 'me' : ''}`;
-                    div.innerHTML = `<span>${idx + 1}位: ${item.name}</span><span>${item.score}m</span>`;
+                    div.innerHTML = `<span>${idx + 1}. ${item.name}</span><span>${item.score}m</span>`;
                     listEl.appendChild(div);
                 });
             } catch(e){}
@@ -437,53 +414,42 @@ function update() {
 function drawUribo(x, y, w, h, isGrounded, vy) {
     ctx.save();
     ctx.translate(x + w / 2, y + h / 2);
-
     if (!isGrounded) {
-        ctx.rotate(Math.min(Math.max(vy * 0.04, -0.4), 0.6));
+        ctx.rotate(Math.min(Math.max(vy * 0.03, -0.3), 0.5));
     } else {
-        ctx.translate(0, Math.sin(animTimer) * 3);
+        ctx.translate(0, Math.sin(animTimer) * 2.5);
     }
 
     ctx.fillStyle = '#C87533';
     ctx.beginPath();
-    ctx.ellipse(0, 5, w * 0.45, h * 0.38, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 4, w * 0.42, h * 0.38, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(-5, -12); ctx.lineTo(-5, 12);
-    ctx.moveTo(8, -10); ctx.lineTo(8, 10);
+    ctx.moveTo(-4, -10); ctx.lineTo(-4, 10);
+    ctx.moveTo(7, -8); ctx.lineTo(7, 8);
     ctx.stroke();
 
     ctx.fillStyle = '#C87533';
     ctx.beginPath();
-    ctx.arc(-w * 0.25, -2, w * 0.28, 0, Math.PI * 2);
+    ctx.arc(-w * 0.24, -2, w * 0.26, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#111';
     ctx.beginPath();
-    ctx.arc(-w * 0.32, -6, 3, 0, Math.PI * 2);
+    ctx.arc(-w * 0.3, -5, 2.5, 0, Math.PI * 2);
     ctx.fill();
-
-    ctx.fillStyle = '#FF94B8';
-    ctx.beginPath();
-    ctx.ellipse(-w * 0.42, 0, 6, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#A0522D';
-    ctx.fillRect(-w * 0.25, h * 0.25, 8, 14);
-    ctx.fillRect(w * 0.1, h * 0.25, 8, 14);
 
     ctx.restore();
 }
 
 function draw() {
     ctx.save();
-    
     if (shakeTimer > 0) {
         shakeTimer--;
-        ctx.translate((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
+        ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -496,12 +462,10 @@ function draw() {
 
     ctx.fillStyle = '#558B2F';
     ctx.beginPath();
-    const mountainOffset = (bgX * 0.3) % canvas.width;
+    const mountainOffset = (bgX * 0.25) % canvas.width;
     ctx.moveTo(-mountainOffset, canvas.height * 0.76);
-    ctx.lineTo(canvas.width * 0.5 - mountainOffset, canvas.height * 0.45);
+    ctx.lineTo(canvas.width * 0.5 - mountainOffset, canvas.height * 0.48);
     ctx.lineTo(canvas.width - mountainOffset, canvas.height * 0.76);
-    ctx.lineTo(canvas.width * 1.5 - mountainOffset, canvas.height * 0.45);
-    ctx.lineTo(canvas.width * 2 - mountainOffset, canvas.height * 0.76);
     ctx.fill();
 
     const groundY = canvas.height * 0.76;
@@ -511,15 +475,8 @@ function draw() {
     ctx.fillStyle = groundGrad;
     ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
 
-    ctx.strokeStyle = '#33691E';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, groundY);
-    ctx.lineTo(canvas.width, groundY);
-    ctx.stroke();
-
     dustParticles.forEach(p => {
-        ctx.fillStyle = `rgba(180, 130, 80, ${p.life * 0.75})`;
+        ctx.fillStyle = `rgba(180, 130, 80, ${p.life * 0.7})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
@@ -531,4 +488,32 @@ function draw() {
     });
 
     if (gameState !== 'START') {
-        drawUribo(player.x, play
+        drawUribo(player.x, player.y, player.width, player.height, player.isGrounded, player.vy);
+    }
+
+    petals.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        ctx.fillStyle = 'rgba(255, 183, 197, 0.85)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    });
+
+    ctx.restore();
+}
+
+function loop() {
+    try {
+        update();
+        draw();
+    } catch(e) {}
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
