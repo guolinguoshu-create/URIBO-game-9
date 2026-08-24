@@ -27,16 +27,17 @@
 
         .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; color: white; text-align: center; padding: 16px; z-index: 20; }
         
-        /* スタート画面の配置をやや上気味に調整 */
-        #start-screen { background: rgba(0,0,0,0.2); justify-content: flex-start; padding-top: 48%; }
+        /* 修正1: スタート画面の配置を少し下に調整（48% -> 60%） */
+        #start-screen { background: rgba(0,0,0,0.2); justify-content: flex-start; padding-top: 60%; }
         
         input[type="text"] { width: 80%; max-width: 230px; padding: 10px 14px; font-size: 16px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 14px; outline: none; user-select: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         
         button.action-btn { padding: 14px 28px; font-size: 18px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px #BF360C; width: 75%; max-width: 200px; z-index: 25; outline: none; }
         button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px #BF360C; }
 
-        /* 結果画面を画面中央に綺麗にレイアウト */
-        #gameover-screen { background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; }
+        /* 修正2: 結果画面の配置を少し上に調整（padding-bottom を追加して全体を上に押し上げる） */
+        #gameover-screen { background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; padding-bottom: 18%; }
+        
         #gameover-screen h1 { font-size: 26px; margin-bottom: 6px; color: #FF5252; text-shadow: 2px 2px 4px #000; }
         #final-score-text { font-size: 20px; color: #00E676; margin-bottom: 14px; font-weight: bold; }
         .ranking-box { width: 92%; max-width: 320px; background: rgba(0,0,0,0.75); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 12px; padding: 12px; margin-bottom: 16px; font-size: 14px; text-align: left; }
@@ -156,7 +157,7 @@ function startBGM() {
 
             bgmStep++;
         } catch(e){}
-    }, 130); // 疾走感のあるテンポ（130ms間隔）
+    }, 130);
 }
 
 function stopBGM() {
@@ -453,20 +454,21 @@ function draw() {
         ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, canvas.height * 0.76, canvas.width, canvas.height * 0.24);
     }
 
-    // 泥・土煙エフェクト
+    // 修正4: 泥・土煙エフェクトを白煙に変更
     dustParticles.forEach(p => {
-        ctx.fillStyle = `rgba(180, 130, 80, ${p.life * 0.75})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${p.life * 0.75})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
     });
 
-    // 障害物描画（点滅・チラつき防止のため座標を整数化＆設定を初期化）
+    // 修正3: 障害物の点滅（チラつき）防止
+    // 座標の Math.floor をなくしてサブピクセル単位で滑らかに移動させるように変更
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
     ctx.font = '36px sans-serif';
     obstacles.forEach(obs => {
-        ctx.fillText(obs.emoji, Math.floor(obs.x + obs.width / 2), Math.floor(obs.y + obs.height / 2));
+        ctx.fillText(obs.emoji, obs.x + obs.width / 2, obs.y + obs.height / 2);
     });
 
     // プレイヤー描画
