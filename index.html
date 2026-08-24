@@ -47,8 +47,8 @@
 
 <div id="outer-container">
     <div id="game-header">
-        <span>🌸 Uribo Chototsu Moshin!</span>
-        <button id="sound-toggle" onclick="toggleSound(event)">🔊</button>
+        <span>🌸 Uribo Chototsu Moshin! v3</span>
+        <button id="sound-toggle">🔊</button>
     </div>
 
     <div id="canvas-wrapper">
@@ -63,7 +63,7 @@
 
         <div id="start-screen" class="ui-screen">
             <input type="text" id="player-name-input" placeholder="名前を入力" maxlength="10">
-            <button class="action-btn" id="start-btn" onclick="startGame(event)">ゲームスタート！</button>
+            <button class="action-btn" id="start-btn">ゲームスタート！</button>
         </div>
 
         <div id="gameover-screen" class="ui-screen">
@@ -75,7 +75,7 @@
                 <div id="ranking-list"></div>
             </div>
 
-            <button class="action-btn" id="restart-btn" onclick="startGame(event)">もう一度挑戦！</button>
+            <button class="action-btn" id="restart-btn">もう一度挑戦！</button>
         </div>
     </div>
 </div>
@@ -86,8 +86,8 @@ const wrapper = document.getElementById('canvas-wrapper');
 const ctx = canvas.getContext('2d');
 
 function resizeCanvas() {
-    canvas.width = wrapper.clientWidth || 360;
-    canvas.height = wrapper.clientHeight || 500;
+    canvas.width = wrapper.clientWidth || window.innerWidth || 360;
+    canvas.height = wrapper.clientHeight || window.innerHeight || 500;
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -120,20 +120,22 @@ const melody = [
 const bassNotes = [130.81, 130.81, 174.61, 174.61, 196.00, 196.00, 130.81, 196.00];
 
 function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
+    try {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    } catch(e) {}
 }
 
-function toggleSound(e) {
-    if (e) e.stopPropagation();
+document.getElementById('sound-toggle').addEventListener('click', (e) => {
+    e.stopPropagation();
     isMuted = !isMuted;
     document.getElementById('sound-toggle').innerText = isMuted ? '🔇' : '🔊';
     if (isMuted) stopBGM(); else if (gameState === 'PLAYING') startBGM();
-}
+});
 
 function startBGM() {
     stopBGM();
@@ -306,6 +308,10 @@ function startGame(e) {
     startBGM();
 }
 
+// ボタンのタッチ・クリックイベントを確実に登録
+document.getElementById('start-btn').addEventListener('pointerdown', startGame);
+document.getElementById('restart-btn').addEventListener('pointerdown', startGame);
+
 function update() {
     petals.forEach(p => {
         p.x -= p.speedX + (gameState === 'PLAYING' ? gameSpeed * 0.25 : 0.5); 
@@ -414,7 +420,6 @@ function update() {
     }
 }
 
-// ウリボを描画する関数（画像ファイル不要）
 function drawUribo(x, y, w, h, isGrounded, vy) {
     ctx.save();
     ctx.translate(x + w / 2, y + h / 2);
@@ -425,13 +430,11 @@ function drawUribo(x, y, w, h, isGrounded, vy) {
         ctx.translate(0, Math.sin(animTimer) * 3);
     }
 
-    // 体 (茶色の丸みのあるボディ)
     ctx.fillStyle = '#C87533';
     ctx.beginPath();
     ctx.ellipse(0, 5, w * 0.45, h * 0.38, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // うりぼうのウリ模様（白い縦縞）
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -439,25 +442,21 @@ function drawUribo(x, y, w, h, isGrounded, vy) {
     ctx.moveTo(8, -10); ctx.lineTo(8, 10);
     ctx.stroke();
 
-    // 頭
     ctx.fillStyle = '#C87533';
     ctx.beginPath();
     ctx.arc(-w * 0.25, -2, w * 0.28, 0, Math.PI * 2);
     ctx.fill();
 
-    // 目
     ctx.fillStyle = '#111';
     ctx.beginPath();
     ctx.arc(-w * 0.32, -6, 3, 0, Math.PI * 2);
     ctx.fill();
 
-    // 鼻（ピンク）
     ctx.fillStyle = '#FF94B8';
     ctx.beginPath();
     ctx.ellipse(-w * 0.42, 0, 6, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 足
     ctx.fillStyle = '#A0522D';
     ctx.fillRect(-w * 0.25, h * 0.25, 8, 14);
     ctx.fillRect(w * 0.1, h * 0.25, 8, 14);
@@ -475,14 +474,12 @@ function draw() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 背景のグラデーション（空）
     const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.76);
     skyGrad.addColorStop(0, '#4A90E2');
     skyGrad.addColorStop(1, '#87CEEB');
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height * 0.76);
 
-    // 遠景の山
     ctx.fillStyle = '#558B2F';
     ctx.beginPath();
     const mountainOffset = (bgX * 0.3) % canvas.width;
@@ -493,7 +490,6 @@ function draw() {
     ctx.lineTo(canvas.width * 2 - mountainOffset, canvas.height * 0.76);
     ctx.fill();
 
-    // 地面（草地）
     const groundY = canvas.height * 0.76;
     const groundGrad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
     groundGrad.addColorStop(0, '#7CB342');
@@ -501,7 +497,6 @@ function draw() {
     ctx.fillStyle = groundGrad;
     ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
 
-    // 地面のライン
     ctx.strokeStyle = '#33691E';
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -509,7 +504,6 @@ function draw() {
     ctx.lineTo(canvas.width, groundY);
     ctx.stroke();
 
-    // 泥・土煙エフェクト
     dustParticles.forEach(p => {
         ctx.fillStyle = `rgba(180, 130, 80, ${p.life * 0.75})`;
         ctx.beginPath();
@@ -517,20 +511,17 @@ function draw() {
         ctx.fill();
     });
 
-    // 障害物描画
     obstacles.forEach(obs => {
         const cachedCanvas = getEmojiCanvas(obs.emoji);
         ctx.drawImage(cachedCanvas, Math.floor(obs.x), Math.floor(obs.y), obs.width, obs.height);
     });
 
-    // プレイヤー描画
     if (gameState !== 'START') {
         drawUribo(player.x, player.y, player.width, player.height, player.isGrounded, player.vy);
     }
 
-    // 桜吹雪描画
     petals.forEach(p => {
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.angle);
-        ctx.fillStyle = 'rgba(255, 183, 
+        ctx.fillStyl
