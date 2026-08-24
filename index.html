@@ -183,8 +183,6 @@ let nextLevelThreshold = 50;
 
 let bgX = 0;
 let obstacles = [];
-let dustParticles = []; 
-let petals = []; 
 
 document.getElementById('high-score-disp').innerText = `${highScore}m`;
 if (playerName) document.getElementById('player-name-input').value = playerName;
@@ -205,7 +203,6 @@ function doJump() {
     }
 }
 
-// 画面全体のタップ/クリック入力（JUMP）
 wrapper.addEventListener('pointerdown', (e) => {
     if (gameState === 'PLAYING') {
         e.preventDefault();
@@ -237,7 +234,6 @@ function startGame(e) {
     player.isGrounded = true;
     
     obstacles = [];
-    dustParticles = [];
     spawnTimer = 0;
     shakeTimer = 0;
     gameState = 'PLAYING';
@@ -354,10 +350,32 @@ function draw() {
 
     if (currentBg.complete && currentBg.naturalWidth > 0) {
         if (gameState === 'PLAYING') {
-            const tileWidth = canvas.width || 360;
-            const startTile = Math.floor(-bgX / tileWidth) - 1;
-            for (let i = startTile; i <= startTile + 3; i++) {
-                ctx.drawImage(currentBg, i * tileWidth + (bgX % tileWidth), 0, tileWidth, canvas.height);
+            // 画像のアスペクト比に合わせて描画幅を補正
+            const bgAspect = currentBg.naturalWidth / currentBg.naturalHeight;
+            const bgWidth = canvas.height * bgAspect;
+            
+            const scrollPos = -bgX;
+            const firstTileIndex = Math.floor(scrollPos / bgWidth);
+            const startX = -(scrollPos % bgWidth);
+
+            let drawX = startX;
+            let tileIndex = firstTileIndex;
+
+            // 画面横幅を覆い尽くすまで無限タイル描画
+            while (drawX < canvas.width) {
+                ctx.save();
+                // 1枚おきに左右反転させて継ぎ目を自然に結合
+                if (Math.abs(tileIndex) % 2 === 1) {
+                    ctx.translate(drawX + bgWidth, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(currentBg, 0, 0, bgWidth + 1, canvas.height);
+                } else {
+                    ctx.drawImage(currentBg, drawX, 0, bgWidth + 1, canvas.height);
+                }
+                ctx.restore();
+                
+                drawX += bgWidth;
+                tileIndex++;
             }
         } else {
             ctx.drawImage(currentBg, 0, 0, canvas.width, canvas.height);
@@ -405,4 +423,3 @@ loop();
 </script>
 </body>
 </html>
-
