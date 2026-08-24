@@ -247,7 +247,7 @@ const player = {
 
 let spawnTimer = 0;
 let nextSpawnDelay = 50;
-const obstacleTypes = ['🍄', '🪨', '🪵', '🐍', '🐸'];
+const obstacleTypes = ['mushroom', 'rock', 'log', 'stump'];
 
 function doJump() {
     if (gameState === 'PLAYING' && player.isGrounded) {
@@ -376,13 +376,13 @@ function update() {
 
     spawnTimer++;
     if (spawnTimer >= nextSpawnDelay) {
-        const emoji = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+        const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
         obstacles.push({
             x: logicalWidth,
-            y: groundY - 45,
-            width: 45,
-            height: 45,
-            emoji: emoji
+            y: groundY - 40,
+            width: 40,
+            height: 40,
+            type: type
         });
         spawnTimer = 0;
         const minDelay = Math.max(25, 55 - Math.floor(gameSpeed * 2));
@@ -393,7 +393,7 @@ function update() {
         let obs = obstacles[i];
         obs.x -= gameSpeed;
 
-        const hitMargin = 12;
+        const hitMargin = 10;
         if (
             player.x + hitMargin < obs.x + obs.width - hitMargin &&
             player.x + player.width - hitMargin > obs.x + hitMargin &&
@@ -467,69 +467,55 @@ function draw() {
         ctx.fill();
     });
 
-    // 障害物を完全不透明・背景なしでくっきり描画（ピクセル単位でスナップ）
+    // 障害物を完全不透明な「図形」として直接描画（絵文字フォント不使用のため点滅ゼロ）
     ctx.save();
-    ctx.globalAlpha = 1.0;
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.font = '36px sans-serif';
-    
     obstacles.forEach(obs => {
         let cx = Math.round(obs.x + obs.width / 2);
         let cy = Math.round(obs.y + obs.height / 2);
-        
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        
-        ctx.fillText(obs.emoji, cx, cy);
-        
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-    });
-    ctx.restore();
 
-    if (gameState !== 'START') {
-        ctx.save();
-        ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-
-        if (!player.isGrounded) {
-            ctx.rotate(Math.min(Math.max(player.vy * 0.04, -0.4), 0.6));
-        } else if (gameState === 'PLAYING') {
-            ctx.translate(0, Math.sin(animTimer) * 3);
-        }
-
-        if (uriboImg.complete && uriboImg.naturalWidth > 0) {
-            ctx.drawImage(uriboImg, -player.width / 2, -player.height / 2, player.width, player.height);
+        if (obs.type === 'mushroom') {
+            // キノコ
+            ctx.fillStyle = '#D7CCC8'; // 軸
+            ctx.fillRect(cx - 5, cy, 10, 15);
+            ctx.fillStyle = '#E53935'; // カサ
+            ctx.beginPath();
+            ctx.arc(cx, cy, 16, Math.PI, 0, false);
+            ctx.fill();
+            // カサの白ドット
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.arc(cx - 6, cy - 8, 3, 0, Math.PI * 2);
+            ctx.arc(cx + 6, cy - 5, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (obs.type === 'rock') {
+            // 岩
+            ctx.fillStyle = '#78909C';
+            ctx.beginPath();
+            ctx.moveTo(cx - 16, cy + 14);
+            ctx.lineTo(cx - 12, cy - 6);
+            ctx.lineTo(cx, cy - 16);
+            ctx.lineTo(cx + 14, cy - 4);
+            ctx.lineTo(cx + 18, cy + 14);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#37474F';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        } else if (obs.type === 'log') {
+            // 切り株・丸太
+            ctx.fillStyle = '#8D6E63';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + 4, 18, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#4E342E';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            // 年輪
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + 4, 9, 6, 0, 0, Math.PI * 2);
+            ctx.stroke();
         } else {
-            ctx.fillStyle = '#D77A33';
-            ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
-        }
-        ctx.restore();
-    }
-
-    petals.forEach(p => {
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.angle);
-        ctx.fillStyle = 'rgba(255, 183, 197, 0.88)';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    });
-
-    ctx.restore();
-}
-
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-loop();
-</script>
-
+            // 石ころ（デフォルト）
+            ctx.fillStyle = '#9E9E9E';
+            ctx.beginPath();
+            ctx
