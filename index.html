@@ -86,16 +86,9 @@ const canvas = document.getElementById('gameCanvas');
 const wrapper = document.getElementById('canvas-wrapper');
 const ctx = canvas.getContext('2d');
 
-let logicalWidth = 360;
-let logicalHeight = 500;
-
 function resizeCanvas() {
-    logicalWidth = wrapper.clientWidth || 360;
-    logicalHeight = wrapper.clientHeight || 500;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = logicalWidth * dpr;
-    canvas.height = logicalHeight * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.width = wrapper.clientWidth || 360;
+    canvas.height = wrapper.clientHeight || 500;
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -103,6 +96,22 @@ window.addEventListener('resize', resizeCanvas);
 const uriboImg = new Image(); uriboImg.src = 'uribo.png'; 
 const topBgImg = new Image(); topBgImg.src = 'top.png'; 
 const gameBgImg = new Image(); gameBgImg.src = 'bg.png'; 
+
+// 絵文字のチラつき・点滅防止：オフスクリーンCanvasで画像（スプライト）化してキャッシュする
+const emojiCache = {};
+function getEmojiImage(emoji) {
+    if (emojiCache[emoji]) return emojiCache[emoji];
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = 64;
+    offCanvas.height = 64;
+    const offCtx = offCanvas.getContext('2d');
+    offCtx.font = '46px sans-serif';
+    offCtx.textAlign = 'center';
+    offCtx.textBaseline = 'middle';
+    offCtx.fillText(emoji, 32, 34);
+    emojiCache[emoji] = offCanvas;
+    return offCanvas;
+}
 
 let audioCtx = null;
 let isMuted = false;
@@ -215,8 +224,8 @@ function initPetals() {
     petals = [];
     for (let i = 0; i < 35; i++) {
         petals.push({
-            x: Math.random() * logicalWidth,
-            y: Math.random() * logicalHeight,
+            x: Math.random() * (canvas.width || 360),
+            y: Math.random() * (canvas.height || 500),
             size: Math.random() * 5 + 4,
             speedY: Math.random() * 1.5 + 0.8,
             speedX: Math.random() * 2 + 1.2,
@@ -247,7 +256,7 @@ const player = {
 
 let spawnTimer = 0;
 let nextSpawnDelay = 50;
-const obstacleTypes = ['mushroom', 'rock', 'log', 'stump'];
+const obstacleTypes = ['🍄', '🪨', '🪵', '🐍', '🐸'];
 
 function doJump() {
     if (gameState === 'PLAYING' && player.isGrounded) {
@@ -303,7 +312,7 @@ function startGame(e) {
     nextLevelThreshold = 50;
     bgX = 0;
     
-    const groundY = logicalHeight * 0.76;
+    const groundY = canvas.height * 0.76;
     player.y = groundY - player.height;
     player.vy = 0;
     player.isGrounded = true;
@@ -326,8 +335,8 @@ function update() {
         p.x -= p.speedX + (gameState === 'PLAYING' ? gameSpeed * 0.25 : 0.5); 
         p.y += p.speedY;
         p.angle += p.spin;
-        if (p.y > logicalHeight) { p.y = -10; p.x = Math.random() * logicalWidth + 50; }
-        if (p.x < -20) { p.x = logicalWidth + 20; p.y = Math.random() * logicalHeight; }
+        if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width + 50; }
+        if (p.x < -20) { p.x = canvas.width + 20; p.y = Math.random() * canvas.height; }
     });
 
     if (gameState !== 'PLAYING') return;
@@ -353,7 +362,7 @@ function update() {
         document.getElementById('high-score-disp').innerText = `${highScore}m`;
     }
 
-    const groundY = logicalHeight * 0.76;
+    const groundY = canvas.height * 0.76;
     const floorY = groundY - player.height;
 
     player.vy += player.gravity;
@@ -376,13 +385,13 @@ function update() {
 
     spawnTimer++;
     if (spawnTimer >= nextSpawnDelay) {
-        const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+        const emoji = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
         obstacles.push({
-            x: logicalWidth,
-            y: groundY - 40,
-            width: 40,
-            height: 40,
-            type: type
+            x: canvas.width,
+            y: groundY - 45,
+            width: 45,
+            height: 45,
+            emoji: emoji
         });
         spawnTimer = 0;
         const minDelay = Math.max(25, 55 - Math.floor(gameSpeed * 2));
@@ -393,7 +402,7 @@ function update() {
         let obs = obstacles[i];
         obs.x -= gameSpeed;
 
-        const hitMargin = 10;
+        const hitMargin = 12;
         if (
             player.x + hitMargin < obs.x + obs.width - hitMargin &&
             player.x + player.width - hitMargin > obs.x + hitMargin &&
@@ -422,14 +431,14 @@ function draw() {
         ctx.translate((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
     }
 
-    ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const currentBg = (gameState === 'START') ? topBgImg : gameBgImg;
 
     if (currentBg.complete && currentBg.naturalWidth > 0) {
         if (gameState === 'PLAYING') {
             const bgAspect = currentBg.naturalWidth / currentBg.naturalHeight;
-            const bgWidth = logicalHeight * bgAspect;
+            const bgWidth = canvas.height * bgAspect;
             
             const scrollPos = -bgX;
             const firstTileIndex = Math.floor(scrollPos / bgWidth);
@@ -438,14 +447,14 @@ function draw() {
             let drawX = startX;
             let tileIndex = firstTileIndex;
 
-            while (drawX < logicalWidth) {
+            while (drawX < canvas.width) {
                 ctx.save();
                 if (Math.abs(tileIndex) % 2 === 1) {
                     ctx.translate(drawX + bgWidth, 0);
                     ctx.scale(-1, 1);
-                    ctx.drawImage(currentBg, 0, 0, bgWidth + 1, logicalHeight);
+                    ctx.drawImage(currentBg, 0, 0, bgWidth + 1, canvas.height);
                 } else {
-                    ctx.drawImage(currentBg, drawX, 0, bgWidth + 1, logicalHeight);
+                    ctx.drawImage(currentBg, drawX, 0, bgWidth + 1, canvas.height);
                 }
                 ctx.restore();
                 
@@ -453,11 +462,11 @@ function draw() {
                 tileIndex++;
             }
         } else {
-            ctx.drawImage(currentBg, 0, 0, logicalWidth, logicalHeight);
+            ctx.drawImage(currentBg, 0, 0, canvas.width, canvas.height);
         }
     } else {
-        ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, logicalWidth, logicalHeight);
-        ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, logicalHeight * 0.76, logicalWidth, logicalHeight * 0.24);
+        ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, canvas.height * 0.76, canvas.width, canvas.height * 0.24);
     }
 
     dustParticles.forEach(p => {
@@ -467,55 +476,54 @@ function draw() {
         ctx.fill();
     });
 
-    // 障害物を完全不透明な「図形」として直接描画（絵文字フォント不使用のため点滅ゼロ）
+    // 障害物をキャッシュした画像として描画（毎フレームの文字処理と shadowBlur を排除し点滅を100%防止）
     ctx.save();
     obstacles.forEach(obs => {
-        let cx = Math.round(obs.x + obs.width / 2);
-        let cy = Math.round(obs.y + obs.height / 2);
+        const img = getEmojiImage(obs.emoji);
+        ctx.drawImage(img, obs.x, obs.y, obs.width, obs.height);
+    });
+    ctx.restore();
 
-        if (obs.type === 'mushroom') {
-            // キノコ
-            ctx.fillStyle = '#D7CCC8'; // 軸
-            ctx.fillRect(cx - 5, cy, 10, 15);
-            ctx.fillStyle = '#E53935'; // カサ
-            ctx.beginPath();
-            ctx.arc(cx, cy, 16, Math.PI, 0, false);
-            ctx.fill();
-            // カサの白ドット
-            ctx.fillStyle = '#FFF';
-            ctx.beginPath();
-            ctx.arc(cx - 6, cy - 8, 3, 0, Math.PI * 2);
-            ctx.arc(cx + 6, cy - 5, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-        } else if (obs.type === 'rock') {
-            // 岩
-            ctx.fillStyle = '#78909C';
-            ctx.beginPath();
-            ctx.moveTo(cx - 16, cy + 14);
-            ctx.lineTo(cx - 12, cy - 6);
-            ctx.lineTo(cx, cy - 16);
-            ctx.lineTo(cx + 14, cy - 4);
-            ctx.lineTo(cx + 18, cy + 14);
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = '#37474F';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        } else if (obs.type === 'log') {
-            // 切り株・丸太
-            ctx.fillStyle = '#8D6E63';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + 4, 18, 12, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#4E342E';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            // 年輪
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + 4, 9, 6, 0, 0, Math.PI * 2);
-            ctx.stroke();
+    if (gameState !== 'START') {
+        ctx.save();
+        ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+
+        if (!player.isGrounded) {
+            ctx.rotate(Math.min(Math.max(player.vy * 0.04, -0.4), 0.6));
+        } else if (gameState === 'PLAYING') {
+            ctx.translate(0, Math.sin(animTimer) * 3);
+        }
+
+        if (uriboImg.complete && uriboImg.naturalWidth > 0) {
+            ctx.drawImage(uriboImg, -player.width / 2, -player.height / 2, player.width, player.height);
         } else {
-            // 石ころ（デフォルト）
-            ctx.fillStyle = '#9E9E9E';
-            ctx.beginPath();
-            ctx
+            ctx.fillStyle = '#D77A33';
+            ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+        }
+        ctx.restore();
+    }
+
+    petals.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        ctx.fillStyle = 'rgba(255, 183, 197, 0.88)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    });
+
+    ctx.restore();
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
