@@ -17,7 +17,6 @@
         #canvas-wrapper { width: 100%; flex: 1; position: relative; overflow: hidden; background: #87CEEB; }
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* スコアボード（スタート時は非表示） */
         #sky-score-board { position: absolute; top: 12px; right: 12px; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); border: 2px solid rgba(255, 255, 255, 0.3); padding: 8px 14px; border-radius: 14px; text-align: right; pointer-events: none; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: none; }
         .score-line { font-size: 13px; color: #EEE; font-weight: bold; text-shadow: 1px 1px 2px #000; }
         .score-val { font-size: 22px; color: #00E676; font-weight: 900; text-shadow: 1px 1px 3px #000; }
@@ -28,7 +27,6 @@
 
         .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; color: white; text-align: center; padding: 16px; z-index: 20; }
         
-        /* タイトルロゴの下に来るよう位置調整（padding-top: 64%） */
         #start-screen { justify-content: flex-start; padding-top: 64%; background: transparent; }
         
         input[type="text"] { width: 80%; max-width: 230px; padding: 8px 12px; font-size: 14px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 8px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
@@ -197,11 +195,12 @@ let animTimer = 0;
 let shakeTimer = 0;
 let nextLevelThreshold = 50;
 
-let bgX = 0; // 背景スクロール用の位置変数
+let bgX = 0; // 背景スクロール用変数
 
 let obstacles = [];
 let dustParticles = []; 
 let petals = []; 
+let clouds = []; // 流れる雲
 
 document.getElementById('high-score-disp').innerText = `${highScore}m`;
 if (playerName) document.getElementById('player-name-input').value = playerName;
@@ -229,6 +228,21 @@ function initPetals() {
     }
 }
 initPetals();
+
+function initClouds() {
+    clouds = [];
+    for (let i = 0; i < 4; i++) {
+        clouds.push({
+            x: Math.random() * canvas.width * 2,
+            y: Math.random() * (canvas.height * 0.4),
+            speed: 0.8 + Math.random() * 0.8,
+            width: 70 + Math.random() * 60,
+            height: 25 + Math.random() * 15,
+            opacity: 0.6 + Math.random() * 0.3
+        });
+    }
+}
+initClouds();
 
 function doJump() {
     if (gameState === 'PLAYING' && player.isGrounded) {
@@ -266,7 +280,7 @@ function startGame() {
     score = 0;
     gameSpeed = 5;
     nextLevelThreshold = 50;
-    bgX = 0; // ゲーム開始時に背景の位置をリセット
+    bgX = 0;
     const groundY = canvas.height * 0.76;
     player.y = groundY - player.height;
     player.vy = 0;
@@ -302,11 +316,17 @@ function update() {
     gameSpeed = 5 + (score / 45);
     animTimer += 0.25;
     
-    // プレイ中の背景スクロール位置更新（ウリボの走行スピードと同期）
+    // 背景のスクロール（ウリボのスピードと同期）
     bgX -= gameSpeed;
-    if (bgX <= -canvas.width) {
-        bgX += canvas.width;
-    }
+    
+    // 雲のスクロール（少しゆっくり動いて奥行きを出す）
+    clouds.forEach(c => {
+        c.x -= c.speed;
+        if (c.x < -c.width) {
+            c.x = canvas.width + Math.random() * 200;
+            c.y = Math.random() * (canvas.height * 0.4);
+        }
+    });
     
     const roundedScore = Math.floor(score);
     document.getElementById('current-score-disp').innerText = `${roundedScore}m`;
@@ -411,15 +431,44 @@ function draw() {
 
     if (currentBg.complete && currentBg.naturalWidth > 0) {
         if (gameState === 'PLAYING') {
-            // 背景を2枚繋げて描画し、途切れないようにスクロールさせる
-            ctx.drawImage(currentBg, bgX, 0, canvas.width, canvas.height);
-            ctx.drawImage(currentBg, bgX + canvas.width, 0, canvas.width, canvas.height);
+            // 【無限ミラーリングスクロール】
+            // 奇数番目と偶数番目で画像を左右反転させて並べることで、同じ絵のループ感を綺麗に消します
+            const tileWidth = canvas.width;
+            const startTile = Math.floor(-bgX / tileWidth) - 1;
+            const endTile = startTile + 4;
+
+            for (let i = startTile; i <= endTile; i++) {
+                let drawX = (i * tileWidth) + (bgX % tileWidth);
+                // bgXがマイナスに進むため調整
+                while(drawX < -tileWidth) drawX += tileWidth * 3; // 念のため補正
+
+                ctx.save();
+                // 奇数タイルを左右反転させることでシームレス＆単調さを解消
+                if (Math.abs(i) % 2 === 1) {
+                    ctx.translate(i * tileWidth + (bgX % tileWidth) + tileWidth, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(currentBg, 0, 0, tileWidth, canvas.height);
+                } else {
+                    ctx.drawImage(currentBg, i * tileWidth + (bgX % tileWidth), 0, tileWidth, canvas.height);
+                }
+                ctx.restore();
+            }
         } else {
             ctx.drawImage(currentBg, 0, 0, canvas.width, canvas.height);
         }
     } else {
         ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, canvas.height * 0.76, canvas.width, canvas.height * 0.24);
+    }
+
+    // 流れる雲の描画
+    if (gameState === 'PLAYING') {
+        clouds.forEach(c => {
+            ctx.fillStyle = `rgba(255, 255, 255, ${c.opacity})`;
+            ctx.beginPath();
+            ctx.ellipse(c.x, c.y, c.width / 2, c.height / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+        });
     }
 
     petals.forEach(p => {
@@ -436,53 +485,4 @@ function draw() {
         ctx.beginPath();
         ctx.ellipse(0, 0, p.size, p.size * 0.6, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
-    });
-
-    dustParticles.forEach(p => {
-        ctx.fillStyle = `rgba(220, 200, 180, ${p.life})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    ctx.textBaseline = 'top';
-    ctx.font = '40px sans-serif';
-    obstacles.forEach(obs => {
-        ctx.fillText(obs.emoji, obs.x, obs.y + 5);
-    });
-
-    if (gameState !== 'START') {
-        ctx.save();
-        let drawY = player.y;
-        ctx.translate(player.x + player.width / 2, drawY + player.height / 2);
-
-        if (!player.isGrounded) {
-            const angle = Math.min(Math.max(player.vy * 0.04, -0.4), 0.6);
-            ctx.rotate(angle);
-        } else if (gameState === 'PLAYING') {
-            ctx.translate(0, Math.sin(animTimer) * 4);
-        }
-
-        if (uriboImg.complete && uriboImg.naturalWidth > 0) {
-            ctx.drawImage(uriboImg, -player.width / 2, -player.height / 2, player.width, player.height);
-        } else {
-            ctx.fillStyle = '#D77A33';
-            ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
-        }
-        ctx.restore();
-    }
-
-    ctx.restore();
-}
-
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-loop();
-</script>
-</body>
-</html>
+        ctx.rest
