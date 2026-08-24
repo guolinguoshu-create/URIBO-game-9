@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Uribo Chototsu Moshin!</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
         html, body { width: 100%; height: 100%; overflow: hidden; background: #121212; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; color: #fff; }
         
         #outer-container { width: 100vw; height: 100vh; max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; background: #1e1e24; position: relative; }
@@ -17,30 +17,30 @@
         #canvas-wrapper { width: 100%; flex: 1; position: relative; overflow: hidden; background: #87CEEB; }
         canvas { width: 100%; height: 100%; display: block; }
 
-        #sky-score-board { position: absolute; top: 12px; right: 12px; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); border: 2px solid rgba(255, 255, 255, 0.3); padding: 8px 14px; border-radius: 14px; text-align: right; pointer-events: none; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: none; }
-        .score-line { font-size: 13px; color: #EEE; font-weight: bold; text-shadow: 1px 1px 2px #000; }
-        .score-val { font-size: 22px; color: #00E676; font-weight: 900; text-shadow: 1px 1px 3px #000; }
+        #sky-score-board { position: absolute; top: 12px; right: 12px; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); border: 2px solid rgba(255, 255, 255, 0.3); padding: 8px 14px; border-radius: 14px; text-align: right; pointer-events: none; z-index: 10; display: none; }
+        .score-line { font-size: 13px; color: #EEE; font-weight: bold; }
+        .score-val { font-size: 22px; color: #00E676; font-weight: 900; }
         .score-val.high { color: #FFD700; }
 
-        #level-up-text { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-size: 36px; font-weight: 900; color: #FF5722; text-shadow: 2px 2px 0 #FFF, -2px -2px 0 #FFF, 2px -2px 0 #FFF, -2px 2px 0 #FFF, 4px 4px 10px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; z-index: 15; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #level-up-text { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-size: 36px; font-weight: 900; color: #FF5722; text-shadow: 2px 2px 0 #FFF, -2px -2px 0 #FFF, 2px -2px 0 #FFF, -2px 2px 0 #FFF; opacity: 0; pointer-events: none; z-index: 15; transition: all 0.3s ease; }
         #level-up-text.active { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 
-        .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; color: white; text-align: center; padding: 16px; z-index: 20; pointer-events: auto; }
+        .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 16px; z-index: 20; }
         
-        #start-screen { justify-content: center; background: rgba(0,0,0,0.2); }
+        #start-screen { background: rgba(0,0,0,0.25); }
         
-        input[type="text"] { width: 80%; max-width: 230px; padding: 10px 14px; font-size: 16px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 12px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        button.action-btn { padding: 12px 24px; font-size: 18px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 4px #BF360C; width: 70%; max-width: 180px; z-index: 25; }
+        input[type="text"] { width: 80%; max-width: 230px; padding: 10px 14px; font-size: 16px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 16px; outline: none; user-select: auto; }
+        
+        button.action-btn { padding: 14px 28px; font-size: 18px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px #BF360C; width: 75%; max-width: 200px; z-index: 25; outline: none; }
         button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px #BF360C; }
 
-        #gameover-screen { justify-content: center; background: rgba(0,0,0,0.85); }
-        #gameover-screen h1 { font-size: 28px !important; margin-bottom: 8px !important; text-shadow: 2px 2px 4px #000; }
-        #final-score-text { font-size: 24px !important; color: #00E676 !important; margin-bottom: 16px !important; text-shadow: 1px 1px 3px #000; }
-        .ranking-box { width: 95% !important; max-width: 360px !important; background: rgba(0,0,0,0.85) !important; border: 2px solid rgba(255, 215, 0, 0.5) !important; border-radius: 12px !important; padding: 12px !important; margin: 10px 0 18px 0 !important; font-size: 15px !important; text-align: left; box-shadow: 0 6px 16px rgba(0,0,0,0.6); }
-        .ranking-title { font-weight: bold; font-size: 16px !important; color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 6px; margin-bottom: 8px; text-align: center; }
-        .ranking-item { display: flex; justify-content: space-between; padding: 6px 8px !important; margin-bottom: 2px; }
-        .ranking-item.me { background: rgba(255, 215, 0, 0.4); border-radius: 6px; font-weight: bold; color: #FFD700; }
-        #restart-btn { padding: 16px 32px !important; font-size: 20px !important; width: 85% !important; max-width: 280px !important; border-radius: 35px !important; }
+        #gameover-screen { background: rgba(0,0,0,0.85); display: none; }
+        #gameover-screen h1 { font-size: 28px; margin-bottom: 8px; color: #FF5252; }
+        #final-score-text { font-size: 22px; color: #00E676; margin-bottom: 16px; }
+        .ranking-box { width: 95%; max-width: 340px; background: rgba(0,0,0,0.8); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 12px; padding: 12px; margin-bottom: 18px; font-size: 14px; text-align: left; }
+        .ranking-title { font-weight: bold; color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 6px; margin-bottom: 8px; text-align: center; }
+        .ranking-item { display: flex; justify-content: space-between; padding: 4px 6px; }
+        .ranking-item.me { background: rgba(255, 215, 0, 0.3); border-radius: 4px; font-weight: bold; color: #FFD700; }
     </style>
 </head>
 <body>
@@ -48,7 +48,7 @@
 <div id="outer-container">
     <div id="game-header">
         <span>🌸 Uribo Chototsu Moshin!</span>
-        <button id="sound-toggle">🔊</button>
+        <button id="sound-toggle" onclick="toggleSound(event)">🔊</button>
     </div>
 
     <div id="canvas-wrapper">
@@ -63,11 +63,11 @@
 
         <div id="start-screen" class="ui-screen">
             <input type="text" id="player-name-input" placeholder="名前を入力" maxlength="10">
-            <button class="action-btn" id="start-btn">ゲームスタート！</button>
+            <button class="action-btn" id="start-btn" onclick="startGame(event)">ゲームスタート！</button>
         </div>
 
-        <div id="gameover-screen" class="ui-screen" style="display: none;">
-            <h1 style="color:#FF5252;">💥 激突 GAMEOVER!!</h1>
+        <div id="gameover-screen" class="ui-screen">
+            <h1>💥 激突 GAMEOVER!!</h1>
             <p id="final-score-text">走行距離: 0m</p>
             
             <div class="ranking-box">
@@ -75,43 +75,47 @@
                 <div id="ranking-list"></div>
             </div>
 
-            <button class="action-btn" id="restart-btn">もう一度挑戦！</button>
+            <button class="action-btn" id="restart-btn" onclick="startGame(event)">もう一度挑戦！</button>
         </div>
     </div>
 </div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
+const wrapper = document.getElementById('canvas-wrapper');
 const ctx = canvas.getContext('2d');
 
-function resize() {
-    canvas.width = canvas.parentElement.clientWidth;
-    canvas.height = canvas.parentElement.clientHeight;
+function resizeCanvas() {
+    canvas.width = wrapper.clientWidth || 360;
+    canvas.height = wrapper.clientHeight || 500;
 }
-resize();
-window.addEventListener('resize', resize);
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-const uriboImg = new Image();
-uriboImg.src = 'uribo.png'; 
-
-const topBgImg = new Image();
-topBgImg.src = 'top.png'; 
-
-const gameBgImg = new Image();
-gameBgImg.src = 'bg.png'; 
+const uriboImg = new Image(); uriboImg.src = 'uribo.png'; 
+const topBgImg = new Image(); topBgImg.src = 'top.png'; 
+const gameBgImg = new Image(); gameBgImg.src = 'bg.png'; 
 
 let audioCtx = null;
 let isMuted = false;
 let bgmTimer = null;
 let bgmStep = 0;
 const bassNotes = [110, 110, 123.47, 130.81, 146.83, 130.81, 123.47, 110];
-const melodyNotes = [440, 523.25, 659.25, 783.99, 880, 783.99, 659.25, 523.25];
 
 function initAudio() {
-    try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    } catch(e){}
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function toggleSound(e) {
+    if (e) e.stopPropagation();
+    isMuted = !isMuted;
+    document.getElementById('sound-toggle').innerText = isMuted ? '🔇' : '🔊';
+    if (isMuted) stopBGM(); else if (gameState === 'PLAYING') startBGM();
 }
 
 function startBGM() {
@@ -120,28 +124,17 @@ function startBGM() {
     bgmTimer = setInterval(() => {
         if (isMuted || !audioCtx || gameState !== 'PLAYING') return;
         try {
-            const bOsc = audioCtx.createOscillator();
-            const bGain = audioCtx.createGain();
-            bOsc.type = 'sawtooth';
-            bOsc.frequency.setValueAtTime(bassNotes[bgmStep % bassNotes.length], audioCtx.currentTime);
-            bGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            bGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-            bOsc.connect(bGain); bGain.connect(audioCtx.destination);
-            bOsc.start(); bOsc.stop(audioCtx.currentTime + 0.1);
-
-            if (bgmStep % 2 === 0) {
-                const mOsc = audioCtx.createOscillator();
-                const mGain = audioCtx.createGain();
-                mOsc.type = 'square';
-                mOsc.frequency.setValueAtTime(melodyNotes[(bgmStep / 2) % melodyNotes.length], audioCtx.currentTime);
-                mGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
-                mGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-                mOsc.connect(mGain); mGain.connect(audioCtx.destination);
-                mOsc.start(); mOsc.stop(audioCtx.currentTime + 0.15);
-            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(bassNotes[bgmStep % bassNotes.length], audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             bgmStep++;
         } catch(e){}
-    }, (60 / 125) * 250);
+    }, 250);
 }
 
 function stopBGM() {
@@ -171,20 +164,13 @@ function playCrashSound() {
         const gain = audioCtx.createGain();
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(30, audioCtx.currentTime + 0.4);
-        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.frequency.linearRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
     } catch(e){}
 }
-
-document.getElementById('sound-toggle').addEventListener('click', (e) => {
-    e.stopPropagation();
-    isMuted = !isMuted;
-    document.getElementById('sound-toggle').innerText = isMuted ? '🔇' : '🔊';
-    if (isMuted) stopBGM(); else if (gameState === 'PLAYING') startBGM();
-});
 
 let gameState = 'START';
 let score = 0;
@@ -199,7 +185,6 @@ let bgX = 0;
 let obstacles = [];
 let dustParticles = []; 
 let petals = []; 
-let clouds = [];
 
 document.getElementById('high-score-disp').innerText = `${highScore}m`;
 if (playerName) document.getElementById('player-name-input').value = playerName;
@@ -212,72 +197,27 @@ let spawnTimer = 0;
 let nextSpawnDelay = 50;
 const obstacleTypes = ['🍄', '🪨', '🪵', '🐍', '🐸'];
 
-function initPetals() {
-    petals = [];
-    for (let i = 0; i < 30; i++) {
-        petals.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 4 + 4,
-            speedY: Math.random() * 1.5 + 0.5,
-            speedX: Math.random() * 2 + 1,
-            angle: Math.random() * Math.PI * 2,
-            spin: (Math.random() - 0.5) * 0.1
-        });
-    }
-}
-initPetals();
-
-function initClouds() {
-    clouds = [];
-    for (let i = 0; i < 4; i++) {
-        clouds.push({
-            x: Math.random() * canvas.width * 2,
-            y: Math.random() * (canvas.height * 0.4),
-            speed: 0.8 + Math.random() * 0.8,
-            width: 70 + Math.random() * 60,
-            height: 25 + Math.random() * 15,
-            opacity: 0.6 + Math.random() * 0.3
-        });
-    }
-}
-initClouds();
-
 function doJump() {
     if (gameState === 'PLAYING' && player.isGrounded) {
         player.vy = player.jumpPower;
         player.isGrounded = false;
         playJumpSound();
-        for(let i=0; i<5; i++) createDust();
     }
 }
 
-const canvasWrapper = document.getElementById('canvas-wrapper');
-canvasWrapper.addEventListener('click', () => { if (gameState === 'PLAYING') doJump(); });
-canvasWrapper.addEventListener('touchstart', (e) => { 
-    if (gameState === 'PLAYING') { 
-        e.preventDefault(); 
-        doJump(); 
-    } 
-}, { passive: false });
+// 画面全体のタップ/クリック入力（JUMP）
+wrapper.addEventListener('pointerdown', (e) => {
+    if (gameState === 'PLAYING') {
+        e.preventDefault();
+        doJump();
+    }
+});
 
-function createDust() {
-    if (Math.random() > 0.4) return;
-    dustParticles.push({
-        x: player.x + 10,
-        y: player.y + player.height - 5,
-        vx: (Math.random() - 0.5) * 2 - gameSpeed * 0.5,
-        vy: (Math.random() - 1) * 2,
-        life: 1.0,
-        size: Math.random() * 6 + 4
-    });
-}
-
-function startGame() {
-    if (gameState === 'PLAYING') return;
-    try {
-        if (document.activeElement) document.activeElement.blur();
-    } catch(e){}
+function startGame(e) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
     initAudio();
     
     const inputEl = document.getElementById('player-name-input');
@@ -285,10 +225,12 @@ function startGame() {
     if (!playerName) playerName = '名無しウリボ';
     try { localStorage.setItem('uribo_playername', playerName); } catch(e) {}
 
+    resizeCanvas();
     score = 0;
     gameSpeed = 5;
     nextLevelThreshold = 50;
     bgX = 0;
+    
     const groundY = canvas.height * 0.76;
     player.y = groundY - player.height;
     player.vy = 0;
@@ -303,26 +245,9 @@ function startGame() {
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('gameover-screen').style.display = 'none';
     document.getElementById('sky-score-board').style.display = 'block';
-    document.getElementById('level-up-text').classList.remove('active');
-
+    
     startBGM();
 }
-
-// ボタンの登録を確実なクリックとタッチに対応
-function setupButton(id, handler) {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.addEventListener('click', (e) => {
-        handler();
-    });
-    btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        handler();
-    }, { passive: false });
-}
-
-setupButton('start-btn', startGame);
-setupButton('restart-btn', startGame);
 
 function update() {
     if (gameState !== 'PLAYING') return;
@@ -330,16 +255,7 @@ function update() {
     score += 0.15;
     gameSpeed = 5 + (score / 45);
     animTimer += 0.25;
-    
     bgX -= gameSpeed;
-    
-    clouds.forEach(c => {
-        c.x -= c.speed;
-        if (c.x < -c.width) {
-            c.x = canvas.width + Math.random() * 200;
-            c.y = Math.random() * (canvas.height * 0.4);
-        }
-    });
     
     const roundedScore = Math.floor(score);
     document.getElementById('current-score-disp').innerText = `${roundedScore}m`;
@@ -348,7 +264,7 @@ function update() {
         nextLevelThreshold += 50;
         const levelText = document.getElementById('level-up-text');
         levelText.classList.add('active');
-        setTimeout(() => { levelText.classList.remove('active'); }, 1500);
+        setTimeout(() => { levelText.classList.remove('active'); }, 1200);
     }
 
     if (roundedScore > highScore) {
@@ -367,15 +283,6 @@ function update() {
         player.y = floorY;
         player.vy = 0;
         player.isGrounded = true;
-        createDust();
-    }
-
-    for (let i = dustParticles.length - 1; i >= 0; i--) {
-        let p = dustParticles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= 0.05;
-        if (p.life <= 0) dustParticles.splice(i, 1);
     }
 
     spawnTimer++;
@@ -416,6 +323,7 @@ function update() {
                 rankings.sort((a, b) => b.score - a.score);
                 rankings = rankings.slice(0, 5);
                 localStorage.setItem('uribo_rankings', JSON.stringify(rankings));
+                
                 const listEl = document.getElementById('ranking-list');
                 listEl.innerHTML = '';
                 rankings.forEach((item, idx) => {
@@ -437,7 +345,7 @@ function draw() {
     
     if (shakeTimer > 0) {
         shakeTimer--;
-        ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+        ctx.translate((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -446,20 +354,10 @@ function draw() {
 
     if (currentBg.complete && currentBg.naturalWidth > 0) {
         if (gameState === 'PLAYING') {
-            const tileWidth = canvas.width || 300;
+            const tileWidth = canvas.width || 360;
             const startTile = Math.floor(-bgX / tileWidth) - 1;
-            const endTile = startTile + 4;
-
-            for (let i = startTile; i <= endTile; i++) {
-                ctx.save();
-                if (Math.abs(i) % 2 === 1) {
-                    ctx.translate(i * tileWidth + (bgX % tileWidth) + tileWidth, 0);
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(currentBg, 0, 0, tileWidth, canvas.height);
-                } else {
-                    ctx.drawImage(currentBg, i * tileWidth + (bgX % tileWidth), 0, tileWidth, canvas.height);
-                }
-                ctx.restore();
+            for (let i = startTile; i <= startTile + 3; i++) {
+                ctx.drawImage(currentBg, i * tileWidth + (bgX % tileWidth), 0, tileWidth, canvas.height);
             }
         } else {
             ctx.drawImage(currentBg, 0, 0, canvas.width, canvas.height);
@@ -469,33 +367,42 @@ function draw() {
         ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, canvas.height * 0.76, canvas.width, canvas.height * 0.24);
     }
 
-    if (gameState === 'PLAYING') {
-        clouds.forEach(c => {
-            ctx.fillStyle = `rgba(255, 255, 255, ${c.opacity})`;
-            ctx.beginPath();
-            ctx.ellipse(c.x, c.y, c.width / 2, c.height / 2, 0, 0, Math.PI * 2);
-            ctx.fill();
-        });
-    }
-
-    petals.forEach(p => {
-        p.x -= p.speedX + (gameSpeed * 0.2); 
-        p.y += p.speedY;
-        p.angle += p.spin;
-        if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width + 100; }
-        if (p.x < -20) { p.x = canvas.width + 20; p.y = Math.random() * canvas.height; }
-
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.angle);
-        ctx.fillStyle = 'rgba(255, 183, 197, 0.85)';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, p.size, p.size * 0.6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+    ctx.textBaseline = 'top';
+    ctx.font = '38px sans-serif';
+    obstacles.forEach(obs => {
+        ctx.fillText(obs.emoji, obs.x, obs.y + 5);
     });
 
-    dustParticles.forEach(p => {
-        ctx.fillStyle = `rgba(220, 200, 180, ${p.life})`;
-        ctx.beginPath();
-        ctx.arc(p.
+    if (gameState !== 'START') {
+        ctx.save();
+        ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+
+        if (!player.isGrounded) {
+            ctx.rotate(Math.min(Math.max(player.vy * 0.04, -0.4), 0.6));
+        } else if (gameState === 'PLAYING') {
+            ctx.translate(0, Math.sin(animTimer) * 3);
+        }
+
+        if (uriboImg.complete && uriboImg.naturalWidth > 0) {
+            ctx.drawImage(uriboImg, -player.width / 2, -player.height / 2, player.width, player.height);
+        } else {
+            ctx.fillStyle = '#D77A33';
+            ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
+        }
+        ctx.restore();
+    }
+
+    ctx.restore();
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
+
