@@ -25,12 +25,12 @@
         #level-up-text { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-size: 36px; font-weight: 900; color: #FF5722; text-shadow: 2px 2px 0 #FFF, -2px -2px 0 #FFF, 2px -2px 0 #FFF, -2px 2px 0 #FFF, 4px 4px 10px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; z-index: 15; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #level-up-text.active { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 
-        .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; color: white; text-align: center; padding: 16px; z-index: 20; }
+        .ui-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; color: white; text-align: center; padding: 16px; z-index: 20; pointer-events: auto; }
         
-        #start-screen { justify-content: flex-start; padding-top: 64%; background: transparent; }
+        #start-screen { justify-content: center; background: rgba(0,0,0,0.2); }
         
-        input[type="text"] { width: 80%; max-width: 230px; padding: 8px 12px; font-size: 14px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 8px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        button.action-btn { padding: 10px 20px; font-size: 16px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 4px #BF360C; width: 70%; max-width: 180px; z-index: 25; }
+        input[type="text"] { width: 80%; max-width: 230px; padding: 10px 14px; font-size: 16px; border-radius: 20px; border: 2px solid #FF5722; background: rgba(0,0,0,0.85); color: #fff; text-align: center; margin-bottom: 12px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        button.action-btn { padding: 12px 24px; font-size: 18px; font-weight: bold; background: #FF5722; color: white; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 4px #BF360C; width: 70%; max-width: 180px; z-index: 25; }
         button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px #BF360C; }
 
         #gameover-screen { justify-content: center; background: rgba(0,0,0,0.85); }
@@ -196,7 +196,6 @@ let shakeTimer = 0;
 let nextLevelThreshold = 50;
 
 let bgX = 0;
-
 let obstacles = [];
 let dustParticles = []; 
 let petals = []; 
@@ -254,8 +253,13 @@ function doJump() {
 }
 
 const canvasWrapper = document.getElementById('canvas-wrapper');
-canvasWrapper.addEventListener('touchstart', (e) => { if (gameState === 'PLAYING') { e.preventDefault(); doJump(); } }, { passive: false });
-canvasWrapper.addEventListener('mousedown', (e) => { if (gameState === 'PLAYING') doJump(); });
+canvasWrapper.addEventListener('click', () => { if (gameState === 'PLAYING') doJump(); });
+canvasWrapper.addEventListener('touchstart', (e) => { 
+    if (gameState === 'PLAYING') { 
+        e.preventDefault(); 
+        doJump(); 
+    } 
+}, { passive: false });
 
 function createDust() {
     if (Math.random() > 0.4) return;
@@ -271,10 +275,14 @@ function createDust() {
 
 function startGame() {
     if (gameState === 'PLAYING') return;
-    if (document.activeElement) document.activeElement.blur();
+    try {
+        if (document.activeElement) document.activeElement.blur();
+    } catch(e){}
     initAudio();
     
-    playerName = document.getElementById('player-name-input').value.trim() || '名無しウリボ';
+    const inputEl = document.getElementById('player-name-input');
+    playerName = inputEl ? inputEl.value.trim() : '名無しウリボ';
+    if (!playerName) playerName = '名無しウリボ';
     try { localStorage.setItem('uribo_playername', playerName); } catch(e) {}
 
     score = 0;
@@ -300,14 +308,21 @@ function startGame() {
     startBGM();
 }
 
-function bindButtonEvent(btnId, handler) {
-    const btn = document.getElementById(btnId);
-    if(!btn) return;
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); handler(); }, { passive: false });
-    btn.addEventListener('click', (e) => { e.preventDefault(); handler(); });
+// ボタンの登録を確実なクリックとタッチに対応
+function setupButton(id, handler) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+        handler();
+    });
+    btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        handler();
+    }, { passive: false });
 }
-bindButtonEvent('start-btn', startGame);
-bindButtonEvent('restart-btn', startGame);
+
+setupButton('start-btn', startGame);
+setupButton('restart-btn', startGame);
 
 function update() {
     if (gameState !== 'PLAYING') return;
@@ -395,19 +410,21 @@ function update() {
             playCrashSound();
             document.getElementById('final-score-text').innerText = `走行距離: ${roundedScore}m`;
             
-            let rankings = JSON.parse(localStorage.getItem('uribo_rankings') || '[]');
-            rankings.push({ name: playerName, score: roundedScore });
-            rankings.sort((a, b) => b.score - a.score);
-            rankings = rankings.slice(0, 5);
-            localStorage.setItem('uribo_rankings', JSON.stringify(rankings));
-            const listEl = document.getElementById('ranking-list');
-            listEl.innerHTML = '';
-            rankings.forEach((item, idx) => {
-                const div = document.createElement('div');
-                div.className = `ranking-item ${(item.name === playerName && item.score === roundedScore) ? 'me' : ''}`;
-                div.innerHTML = `<span>${idx + 1}位: ${item.name}</span><span>${item.score}m</span>`;
-                listEl.appendChild(div);
-            });
+            try {
+                let rankings = JSON.parse(localStorage.getItem('uribo_rankings') || '[]');
+                rankings.push({ name: playerName, score: roundedScore });
+                rankings.sort((a, b) => b.score - a.score);
+                rankings = rankings.slice(0, 5);
+                localStorage.setItem('uribo_rankings', JSON.stringify(rankings));
+                const listEl = document.getElementById('ranking-list');
+                listEl.innerHTML = '';
+                rankings.forEach((item, idx) => {
+                    const div = document.createElement('div');
+                    div.className = `ranking-item ${(item.name === playerName && item.score === roundedScore) ? 'me' : ''}`;
+                    div.innerHTML = `<span>${idx + 1}位: ${item.name}</span><span>${item.score}m</span>`;
+                    listEl.appendChild(div);
+                });
+            } catch(e){}
 
             document.getElementById('gameover-screen').style.display = 'flex';
         }
@@ -481,15 +498,4 @@ function draw() {
     dustParticles.forEach(p => {
         ctx.fillStyle = `rgba(220, 200, 180, ${p.life})`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    ctx.textBaseline = 'top';
-    ctx.font = '40px sans-serif';
-    obstacles.forEach(obs => {
-        ctx.fillText(obs.emoji, obs.x, obs.y + 5);
-    });
-
-    if (gameState !== 'START') {
-      
+        ctx.arc(p.
