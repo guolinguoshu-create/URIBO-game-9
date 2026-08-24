@@ -97,18 +97,26 @@ const uriboImg = new Image(); uriboImg.src = 'uribo.png';
 const topBgImg = new Image(); topBgImg.src = 'top.png'; 
 const gameBgImg = new Image(); gameBgImg.src = 'bg.png'; 
 
-// 絵文字のチラつき・点滅防止：オフスクリーンCanvasで画像（スプライト）化してキャッシュする
+// 障害物を大きく、くっきりと（影を追加して背景と同化を防ぐ）
 const emojiCache = {};
 function getEmojiImage(emoji) {
     if (emojiCache[emoji]) return emojiCache[emoji];
     const offCanvas = document.createElement('canvas');
-    offCanvas.width = 64;
-    offCanvas.height = 64;
+    offCanvas.width = 80;  // サイズを拡張 (64 -> 80)
+    offCanvas.height = 80; // サイズを拡張 (64 -> 80)
     const offCtx = offCanvas.getContext('2d');
-    offCtx.font = '46px sans-serif';
+    
+    // 背景から浮き出させるための影（生成時に1回だけ付与するので動作は軽快です）
+    offCtx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+    offCtx.shadowBlur = 4;
+    offCtx.shadowOffsetX = 2;
+    offCtx.shadowOffsetY = 2;
+
+    offCtx.font = '60px sans-serif'; // フォントサイズも大きく
     offCtx.textAlign = 'center';
     offCtx.textBaseline = 'middle';
-    offCtx.fillText(emoji, 32, 34);
+    offCtx.fillText(emoji, 40, 44);
+    
     emojiCache[emoji] = offCanvas;
     return offCanvas;
 }
@@ -388,9 +396,9 @@ function update() {
         const emoji = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
         obstacles.push({
             x: canvas.width,
-            y: groundY - 45,
-            width: 45,
-            height: 45,
+            y: groundY - 55, // 少し大きくした分、高さを調整 (45 -> 55)
+            width: 60,       // 障害物を大きく (45 -> 60)
+            height: 60,      // 障害物を大きく (45 -> 60)
             emoji: emoji
         });
         spawnTimer = 0;
@@ -402,7 +410,8 @@ function update() {
         let obs = obstacles[i];
         obs.x -= gameSpeed;
 
-        const hitMargin = 12;
+        // 見た目が大きくなった分、当たり判定を少し優しく（甘く）する
+        const hitMargin = 16; 
         if (
             player.x + hitMargin < obs.x + obs.width - hitMargin &&
             player.x + player.width - hitMargin > obs.x + hitMargin &&
@@ -476,7 +485,6 @@ function draw() {
         ctx.fill();
     });
 
-    // 障害物をキャッシュした画像として描画（毎フレームの文字処理と shadowBlur を排除し点滅を100%防止）
     ctx.save();
     obstacles.forEach(obs => {
         const img = getEmojiImage(obs.emoji);
