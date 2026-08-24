@@ -195,12 +195,12 @@ let animTimer = 0;
 let shakeTimer = 0;
 let nextLevelThreshold = 50;
 
-let bgX = 0; // 背景スクロール用変数
+let bgX = 0;
 
 let obstacles = [];
 let dustParticles = []; 
 let petals = []; 
-let clouds = []; // 流れる雲
+let clouds = [];
 
 document.getElementById('high-score-disp').innerText = `${highScore}m`;
 if (playerName) document.getElementById('player-name-input').value = playerName;
@@ -316,10 +316,8 @@ function update() {
     gameSpeed = 5 + (score / 45);
     animTimer += 0.25;
     
-    // 背景のスクロール（ウリボのスピードと同期）
     bgX -= gameSpeed;
     
-    // 雲のスクロール（少しゆっくり動いて奥行きを出す）
     clouds.forEach(c => {
         c.x -= c.speed;
         if (c.x < -c.width) {
@@ -431,19 +429,12 @@ function draw() {
 
     if (currentBg.complete && currentBg.naturalWidth > 0) {
         if (gameState === 'PLAYING') {
-            // 【無限ミラーリングスクロール】
-            // 奇数番目と偶数番目で画像を左右反転させて並べることで、同じ絵のループ感を綺麗に消します
-            const tileWidth = canvas.width;
+            const tileWidth = canvas.width || 300;
             const startTile = Math.floor(-bgX / tileWidth) - 1;
             const endTile = startTile + 4;
 
             for (let i = startTile; i <= endTile; i++) {
-                let drawX = (i * tileWidth) + (bgX % tileWidth);
-                // bgXがマイナスに進むため調整
-                while(drawX < -tileWidth) drawX += tileWidth * 3; // 念のため補正
-
                 ctx.save();
-                // 奇数タイルを左右反転させることでシームレス＆単調さを解消
                 if (Math.abs(i) % 2 === 1) {
                     ctx.translate(i * tileWidth + (bgX % tileWidth) + tileWidth, 0);
                     ctx.scale(-1, 1);
@@ -461,7 +452,6 @@ function draw() {
         ctx.fillStyle = '#8BC34A'; ctx.fillRect(0, canvas.height * 0.76, canvas.width, canvas.height * 0.24);
     }
 
-    // 流れる雲の描画
     if (gameState === 'PLAYING') {
         clouds.forEach(c => {
             ctx.fillStyle = `rgba(255, 255, 255, ${c.opacity})`;
@@ -485,4 +475,21 @@ function draw() {
         ctx.beginPath();
         ctx.ellipse(0, 0, p.size, p.size * 0.6, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.rest
+        ctx.restore();
+    });
+
+    dustParticles.forEach(p => {
+        ctx.fillStyle = `rgba(220, 200, 180, ${p.life})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.textBaseline = 'top';
+    ctx.font = '40px sans-serif';
+    obstacles.forEach(obs => {
+        ctx.fillText(obs.emoji, obs.x, obs.y + 5);
+    });
+
+    if (gameState !== 'START') {
+      
